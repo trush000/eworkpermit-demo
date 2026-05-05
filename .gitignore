@@ -1,0 +1,13 @@
+# System files
+.gemini/
+.antigravity/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.log
+
+# Project specific
+node_modules/

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — E-Work Permit System</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-title">📊 Dashboard</span>
+      </div>
+      <div class="topbar-right">
+        <button class="topbar-btn" onclick="resetDB();location.reload();" title="Reset Demo Data">🔄</button>
+        <button class="topbar-btn" style="position:relative;" title="Notifications">
+          🔔<span class="notif-dot" id="notif-badge"></span>
+        </button>
+        <span id="topbar-user" class="text-sm text-muted"></span>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div class="page-header">
+        <div>
+          <h1>ภาพรวมระบบ</h1>
+          <p id="greeting-text">ยินดีต้อนรับ</p>
+        </div>
+        <a href="work-permits/create.html" class="btn btn-primary" id="btn-create-wp" onclick="showToast('กำลังไปหน้าสร้างใบงาน...', 'info', 1000)">➕ สร้าง Work Permit</a>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid" id="stats-grid"></div>
+
+
+
+      <!-- Main Grid -->
+      <div class="grid-2 gap-16">
+        <!-- Recent Permits -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🪪 Work Permit ล่าสุด</span>
+            <a href="work-permits/index.html" class="btn btn-ghost btn-sm">ดูทั้งหมด →</a>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <div id="recent-permits-table"></div>
+          </div>
+        </div>
+
+        <!-- Expiry Alerts + Chart -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">⚠️ แจ้งเตือนหมดอายุ</span>
+              <a href="contractors/index.html" class="btn btn-ghost btn-sm">จัดการ →</a>
+            </div>
+            <div class="card-body" id="expiry-alerts"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">📈 สถานะ Work Permit</span>
+            </div>
+            <div class="card-body">
+              <div class="chart-container"><canvas id="chart-status"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Row -->
+      <div class="grid-2 gap-16 mt-16">
+        <!-- Pending Approvals -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">⏳ รอการอนุมัติ</span>
+          </div>
+          <div class="card-body" id="pending-approvals"></div>
+        </div>
+
+        <!-- Permit Type Chart -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🔥❄️ ประเภทงาน (เดือนนี้)</span>
+          </div>
+          <div class="card-body">
+            <div class="chart-container"><canvas id="chart-type"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/db.js"></script>
+<script src="js/utils.js"></script>
+<script>
+  const user = requireAuth('index.html');
+  if (user) console.log('Dashboard authorized as:', user.role);
+  if (user) {
+    renderSidebar('');
+    document.getElementById('topbar-user').textContent = user.full_name;
+    updateNotifBadge();
+
+    if (canDo(user, 'create_permit')) {
+      console.log('User has create_permit permission');
+    } else {
+      document.getElementById('btn-create-wp').style.display = 'none';
+    }
+
+    document.getElementById('greeting-text').textContent =
+      `สวัสดี, ${user.full_name} (${ROLES[user.role]?.label}) · ${formatDate(new Date().toISOString())}`;
+
+    // ===== Load Data =====
+    const permits = dbGetAll('work_permits');
+    const contractors = dbGetAll('contractors');
+    const certs = dbGetAll('contractor_certificates');
+    const companies = dbGetAll('contractor_companies');
+
+    // ===== Stats =====
+    const totalPermits = permits.length;
+    const pendingCount = permits.filter(p => p.status.startsWith('PENDING')).length;
+    const approvedCount = permits.filter(p => p.status === 'APPROVED').length;
+    const closedCount = permits.filter(p => p.status === 'CLOSED').length;
+    const activeContractors = contractors.filter(c => c.status === 'ACTIVE').length;
+
+    document.getElementById('stats-grid').innerHTML = `
+      <div class="stat-card c-accent" onclick="window.location.href='work-permits/index.html'" style="cursor:pointer;">
+        <div class="stat-icon">🪪</div>
+        <div class="stat-label">Work Permits ทั้งหมด</div>
+        <div class="stat-value">${totalPermits}</div>
+        <div class="stat-sub">ตลอดการใช้งาน</div>
+      </div>
+      <div class="stat-card c-gold" onclick="window.location.href='work-permits/index.html?status=PENDING'" style="cursor:pointer;">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-label">รอการอนุมัติ</div>
+        <div class="stat-value">${pendingCount}</div>
+        <div class="stat-sub">ต้องดำเนินการ</div>
+      </div>
+      <div class="stat-card c-green" onclick="window.location.href='work-permits/index.html?status=APPROVED'" style="cursor:pointer;">
+        <div class="stat-icon">✅</div>
+        <div class="stat-label">อนุมัติแล้ว</div>
+        <div class="stat-value">${approvedCount}</div>
+        <div class="stat-sub">กำลังปฏิบัติงาน</div>
+      </div>
+      <div class="stat-card c-purple" onclick="window.location.href='contractors/index.html'" style="cursor:pointer;">
+        <div class="stat-icon">👷</div>
+        <div class="stat-label">ผู้รับเหมา Active</div>
+        <div class="stat-value">${activeContractors}</div>
+        <div class="stat-sub">จาก ${companies.length} บริษัท</div>
+      </div>
+      <div class="stat-card c-red" onclick="window.location.href='contractors/index.html'" style="cursor:pointer;">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-label">ใบเซอร์ใกล้หมดอายุ</div>
+        <div class="stat-value">${certs.filter(c => daysUntil(c.expiry_date) <= 30 && daysUntil(c.expiry_date) >= 0).length}</div>
+        <div class="stat-sub">ภายใน 30 วัน</div>
+      </div>`;
+
+    // ===== Recent Permits =====
+    const recent = permits.slice(-5).reverse();
+    const recentTable = document.getElementById('recent-permits-table');
+    if (recent.length === 0) {
+      recentTable.innerHTML = '<div class="empty-state">ไม่มีข้อมูล</div>';
+    } else {
+      recentTable.innerHTML = `<table class="data-table">
+        <thead><tr><th>รหัส</th><th>ประเภท</th><th>พื้นที่</th><th>สถานะ</th></tr></thead>
+        <tbody>${recent.map(p => `
+          <tr onclick="window.location.href='work-permits/detail.html?id=${p.id}'" style="cursor:pointer;">
+            <td class="td-mono">${p.permit_code}</td>
+            <td><span class="badge ${p.work_type==='HOT_WORK'?'badge-hot':'badge-cold'}">${p.work_type==='HOT_WORK'?'HOT':'COLD'}</span></td>
+            <td>${p.work_area}</td>
+            <td>${permitBadge(p.status)}</td>
+          </tr>`).join('')}
+        </tbody></table>`;
+    }
+
+    // ===== Expiry Alerts =====
+    const expiring = certs.filter(c => {
+      const days = daysUntil(c.expiry_date);
+      return days !== null && days <= 30;
+    }).sort((a,b) => (daysUntil(a.expiry_date)||0) - (daysUntil(b.expiry_date)||0)).slice(0, 4);
+
+    const expiryList = document.getElementById('expiry-alerts');
+    if (expiring.length === 0) {
+      expiryList.innerHTML = '<div class="empty-state">ไม่มีการแจ้งเตือน</div>';
+    } else {
+      expiryList.innerHTML = expiring.map(c => {
+        const ctr = contractors.find(cont => cont.id === c.contractor_id);
+        const days = daysUntil(c.expiry_date);
+        const color = days < 0 ? 'var(--red)' : days <= 7 ? 'var(--orange)' : 'var(--gold)';
+        return `<div class="notif-item">
+          <div class="notif-content">
+            <div class="notif-title">${ctr ? ctr.first_name + ' ' + ctr.last_name : 'N/A'}</div>
+            <div class="notif-meta">${c.cert_name}</div>
+          </div>
+          <div class="notif-time" style="color:${color}; font-weight:bold;">${daysLabel(c.expiry_date)}</div>
+        </div>`;
+      }).join('');
+    }
+
+    // ===== Pending Approvals =====
+    const pending = permits.filter(p => p.status.startsWith('PENDING')).slice(0, 4);
+    const pendingList = document.getElementById('pending-approvals');
+    if (pending.length === 0) {
+      pendingList.innerHTML = '<div class="empty-state">ไม่มีรายการรออนุมัติ</div>';
+    } else {
+      pendingList.innerHTML = pending.map(p => `
+        <div class="notif-item" onclick="window.location.href='work-permits/detail.html?id=${p.id}'" style="cursor:pointer;">
+          <div class="notif-content">
+            <div class="notif-title">${p.permit_code}</div>
+            <div class="notif-meta">${p.contractor_company_name} · ${p.work_area}</div>
+          </div>
+          <div class="notif-time">${permitBadge(p.status)}</div>
+        </div>`).join('');
+    }
+
+    // ===== Charts =====
+    initStatusChart(permits);
+    initTypeChart(permits);
+  }
+
+  function initStatusChart(permits) {
+    const counts = { DRAFT:0, PENDING:0, APPROVED:0, CLOSED:0, REJECTED:0 };
+    permits.forEach(p => {
+      if (p.status.startsWith('PENDING')) counts.PENDING++;
+      else if (counts[p.status] !== undefined) counts[p.status]++;
+    });
+
+    new Chart(document.getElementById('chart-status'), {
+      type: 'doughnut',
+      data: {
+        labels: ['DRAFT', 'Pending', 'Approved', 'Closed', 'Rejected'],
+        datasets: [{
+          data: [counts.DRAFT, counts.PENDING, counts.APPROVED, counts.CLOSED, counts.REJECTED],
+          backgroundColor: ['#607d8b', '#ffb300', '#4caf50', '#9c27b0', '#f44336'],
+          borderWidth: 0,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { color: '#888', usePointStyle: true } } },
+        cutout: '70%'
+      }
+    });
+  }
+
+  function initTypeChart(permits) {
+    const hot = permits.filter(p => p.work_type === 'HOT_WORK').length;
+    const cold = permits.filter(p => p.work_type === 'COLD_WORK').length;
+
+    new Chart(document.getElementById('chart-type'), {
+      type: 'bar',
+      data: {
+        labels: ['Hot Work', 'Cold Work'],
+        datasets: [{
+          label: 'จำนวน',
+          data: [hot, cold],
+          backgroundColor: ['#ff7043', '#00d4ff'],
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#888' } },
+          x: { grid: { display: false }, ticks: { color: '#888' } }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>กรอกข้อมูลผู้รับเหมา — E-Work Permit System</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  body { background: var(--bg); padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
+  .public-form-wrap { width: 100%; max-width: 800px; }
+  .public-header { text-align: center; margin-bottom: 32px; }
+  .public-header h1 { font-size: 24px; color: var(--accent); margin-bottom: 8px; }
+  .public-header p { color: var(--text3); }
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; margin-bottom: 24px; }
+  .worker-item { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+  .worker-info h4 { font-size: 14px; margin-bottom: 2px; }
+  .worker-info p { font-size: 12px; color: var(--text3); }
+</style>
+</head>
+<body>
+<div class="public-form-wrap">
+  <div class="public-header">
+    <div class="badge" style="background:var(--accent);color:#000;padding:4px 12px;margin-bottom:12px;">CONTRACTOR PORTAL</div>
+    <h1>แบบฟอร์มกรอกข้อมูลผู้รับเหมา</h1>
+    <p id="permit-info">กำลังโหลดข้อมูลใบอนุญาต...</p>
+  </div>
+
+  <div id="form-container" style="display:none;">
+    <!-- Step 1: Workers -->
+    <div class="form-card">
+      <div class="flex-between mb-16">
+        <h2 class="card-title">👷 รายชื่อพนักงานที่เข้าปฏิบัติงาน</h2>
+        <button class="btn btn-primary btn-sm" onclick="openAddWorker()">➕ เพิ่มพนักงาน</button>
+      </div>
+      <div id="worker-list">
+        <div class="empty-state" style="padding:20px;"><p>ยังไม่มีรายชื่อ กรุณาเพิ่มพนักงาน</p></div>
+      </div>
+    </div>
+
+    <!-- Step 2: PPE & Safety -->
+    <div class="form-card">
+      <h2 class="card-title mb-16">🦺 รายการอุปกรณ์ป้องกันภัย (PPE)</h2>
+      <div class="checkbox-group" id="ppe-group">
+        <!-- Will be populated from JS -->
+      </div>
+      <div class="form-group mt-16">
+        <label class="form-label">KYM / มาตรการความปลอดภัยเพิ่มเติม</label>
+        <textarea id="inp-kym" class="form-control" rows="4" placeholder="ระบุการวิเคราะห์ความปลอดภัย หรือมาตรการป้องกัน..."></textarea>
+      </div>
+    </div>
+
+    <div class="flex-center gap-16" style="justify-content:center;margin-top:32px;">
+      <button class="btn btn-success btn-lg" onclick="submitForm()">✅ ส่งข้อมูลให้เจ้าของงานตรวจสอบ</button>
+    </div>
+  </div>
+
+  <div id="error-container" style="display:none;">
+    <div class="card" style="border-color:var(--red);text-align:center;padding:40px;">
+      <div style="font-size:48px;margin-bottom:16px;">❌</div>
+      <h3 id="error-msg">ลิงก์ไม่ถูกต้องหรือหมดอายุ</h3>
+      <p class="mt-8">กรุณาติดต่อเจ้าของงาน (DOWA) เพื่อขอลิงก์ใหม่</p>
+    </div>
+  </div>
+</div>
+
+<!-- Add Worker Modal -->
+<div class="modal-overlay" id="modal-worker">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🔍 ค้นหา/เพิ่มพนักงาน</span>
+      <button class="modal-close" onclick="closeModal('modal-worker')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="search-box mb-16" style="max-width:100%;">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="inp-worker-search" placeholder="พิมพ์ชื่อ หรือเลขบัตร เพื่อค้นหาพนักงานที่ลงทะเบียนไว้แล้ว..." oninput="searchContractors()">
+      </div>
+      <div id="worker-results" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;display:none;"></div>
+      
+      <div class="divider-text"><span>หรือกรอกข้อมูลใหม่</span></div>
+      
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">ชื่อ</label><input type="text" id="w-fname" class="form-control"></div>
+        <div class="form-group"><label class="form-label">นามสกุล</label><input type="text" id="w-lname" class="form-control"></div>
+      </div>
+      <div class="form-group"><label class="form-label">เลขบัตรประชาชน/พาสปอร์ต</label><input type="text" id="w-id" class="form-control"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-worker')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="addWorker()">เพิ่มรายชื่อ</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/db.js"></script>
+<script src="js/utils.js"></script>
+<script>
+  let permit = null;
+  let selectedWorkers = [];
+  const ppeList = ['หมวกนิรภัย', 'รองเท้านิรภัย', 'ถุงมือผ้า', 'ถุงมือหนัง', 'แว่นตานิรภัย', 'ที่อุดหู', 'เข็มขัดนิรภัย', 'หน้ากากกันฝุ่น/สารเคมี', 'ชุดกันความร้อน'];
+
+  // Initialize
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+
+  if (!token) {
+    showError('ไม่พบ Token สำหรับเข้าถึงข้อมูล');
+  } else {
+    permit = dbGetAll('work_permits').find(p => p.contractor_link_token === token);
+    if (!permit) {
+      showError('ลิงก์ไม่ถูกต้องหรือใบอนุญาตถูกลบไปแล้ว');
+    } else {
+      renderPermitInfo();
+      renderPPE();
+      document.getElementById('form-container').style.display = 'block';
+    }
+  }
+
+  function showError(msg) {
+    document.getElementById('error-msg').textContent = msg;
+    document.getElementById('error-container').style.display = 'block';
+    document.getElementById('permit-info').style.display = 'none';
+  }
+
+  function renderPermitInfo() {
+    document.getElementById('permit-info').innerHTML = `
+      ใบอนุญาตเลขที่: <span class="mono text-accent">${permit.permit_code}</span><br>
+      พื้นที่: <strong>${permit.work_area}</strong> | บริษัท: <strong>${permit.contractor_company_name}</strong>
+    `;
+  }
+
+  function renderPPE() {
+    const group = document.getElementById('ppe-group');
+    group.innerHTML = ppeList.map(item => `
+      <label class="checkbox-item" id="label-ppe-${item}">
+        <input type="checkbox" name="ppe" value="${item}" onchange="this.parentElement.classList.toggle('checked', this.checked)">
+        ${item}
+      </label>
+    `).join('');
+  }
+
+  function openAddWorker() {
+    document.getElementById('w-fname').value = '';
+    document.getElementById('w-lname').value = '';
+    document.getElementById('w-id').value = '';
+    document.getElementById('worker-results').style.display = 'none';
+    openModal('modal-worker');
+  }
+
+  function searchContractors() {
+    const q = document.getElementById('inp-worker-search').value.trim().toLowerCase();
+    const results = document.getElementById('worker-results');
+    if (q.length < 2) { results.style.display = 'none'; return; }
+
+    const matches = dbGetAll('contractors').filter(c => 
+      c.company_id === permit.contractor_company_id && 
+      (c.first_name.toLowerCase().includes(q) || c.last_name.toLowerCase().includes(q) || (c.card_number || '').toLowerCase().includes(q))
+    );
+
+    if (matches.length === 0) {
+      results.innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text3);">ไม่พบข้อมูลที่ลงทะเบียนไว้</div>';
+    } else {
+      results.innerHTML = matches.map(m => `
+        <div style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px;" onclick="selectContractor('${m.id}')">
+          ${m.first_name} ${m.last_name} (${m.card_number || 'ยังไม่มีบัตร'})
+        </div>
+      `).join('');
+    }
+    results.style.display = 'block';
+  }
+
+  function selectContractor(id) {
+    const c = dbGetById('contractors', id);
+    if (c) {
+      addWorkerToList({
+        contractor_id: c.id,
+        name: `${c.first_name} ${c.last_name}`,
+        id_num: c.card_number || 'REGISTERED'
+      });
+      closeModal('modal-worker');
+    }
+  }
+
+  function addWorker() {
+    const fname = document.getElementById('w-fname').value.trim();
+    const lname = document.getElementById('w-lname').value.trim();
+    const idNum = document.getElementById('w-id').value.trim();
+    if (!fname || !lname || !idNum) { showToast('กรุณากรอกข้อมูลให้ครบ', 'error'); return; }
+
+    addWorkerToList({
+      contractor_id: null, // New worker
+      name: `${fname} ${lname}`,
+      id_num: idNum
+    });
+    closeModal('modal-worker');
+  }
+
+  function addWorkerToList(worker) {
+    if (selectedWorkers.find(w => w.id_num === worker.id_num)) {
+      showToast('มีรายชื่อนี้อยู่แล้ว', 'warning');
+      return;
+    }
+    selectedWorkers.push(worker);
+    renderWorkerList();
+  }
+
+  function removeWorker(index) {
+    selectedWorkers.splice(index, 1);
+    renderWorkerList();
+  }
+
+  function renderWorkerList() {
+    const list = document.getElementById('worker-list');
+    if (selectedWorkers.length === 0) {
+      list.innerHTML = '<div class="empty-state" style="padding:20px;"><p>ยังไม่มีรายชื่อ กรุณาเพิ่มพนักงาน</p></div>';
+      return;
+    }
+    list.innerHTML = selectedWorkers.map((w, i) => `
+      <div class="worker-item">
+        <div class="worker-info">
+          <h4>${w.name}</h4>
+          <p>ID: ${w.id_num}</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="removeWorker(${i})">🗑</button>
+      </div>
+    `).join('');
+  }
+
+  function submitForm() {
+    if (selectedWorkers.length === 0) { showToast('กรุณาเพิ่มรายชื่อพนักงานอย่างน้อย 1 คน', 'error'); return; }
+    
+    const selectedPPE = Array.from(document.querySelectorAll('input[name="ppe"]:checked')).map(i => i.value);
+    const kym = document.getElementById('inp-kym').value.trim();
+
+    // In a real app, this would be an API call.
+    // For demo, we update the DB directly.
+    
+    // 1. Add workers to permit_workers
+    selectedWorkers.forEach(w => {
+      dbInsert('permit_workers', {
+        permit_id: permit.id,
+        contractor_id: w.contractor_id || 'NEW_WORKER',
+        name: w.name,
+        id_num: w.id_num,
+        date: permit.start_date,
+        check_in: null,
+        check_out: null
+      });
+    });
+
+    // 2. Update permit status and extra info
+    dbUpdate('work_permits', permit.id, {
+      status: 'PENDING_OWNER', // Transition to first approval step
+      ppe_required: selectedPPE,
+      kym_sheet_data: kym,
+      submitted_at: new Date().toISOString()
+    });
+
+    // 3. Create notification for Work Owner
+    dbInsert('notifications', {
+      type: 'EMAIL',
+      event: 'WP_SUBMITTED',
+      recipient_email: 'owner@dowa.co.th',
+      subject: `[Work Permit] ผู้รับเหมาส่งข้อมูลแล้ว: ${permit.permit_code}`,
+      body: `ผู้รับเหมาบริษัท ${permit.contractor_company_name} ได้กรอกข้อมูลและส่งเอกสารสำหรับใบอนุญาตเลขที่ ${permit.permit_code} แล้ว กรุณาตรวจสอบและอนุมัติในระบบ`,
+      ref_type: 'work_permit',
+      ref_id: permit.id,
+      sent_at: new Date().toISOString(),
+      status: 'PENDING'
+    });
+
+    showToast('ส่งข้อมูลสำเร็จ! เจ้าของงานจะได้รับการแจ้งเตือน', 'success');
+    
+    // Disable form
+    document.getElementById('form-container').innerHTML = `
+      <div class="card" style="text-align:center;padding:60px;">
+        <div style="font-size:64px;margin-bottom:24px;">✅</div>
+        <h2>ส่งข้อมูลเรียบร้อยแล้ว</h2>
+        <p class="text-muted mt-8">ขอบคุณที่ให้ข้อมูล ระบบได้ส่งเรื่องไปยังเจ้าของงาน (DOWA) เพื่อดำเนินการอนุมัติต่อไป</p>
+        <p class="text-xs text-muted mt-24">คุณสามารถปิดหน้านี้ได้เลย</p>
+      </div>
+    `;
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บริษัทผู้รับเหมา — E-Work Permit System</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-breadcrumb"><a href="../dashboard.html">Dashboard</a> /</span>
+        <span class="topbar-title">🏢 บริษัทผู้รับเหมา</span>
+      </div>
+    </header>
+    <div class="page-content">
+      <div class="page-header">
+        <div><h1>ทะเบียนบริษัทผู้รับเหมา</h1><p>จัดการบริษัทและสัญญาผู้รับเหมา</p></div>
+        <button class="btn btn-primary" onclick="openModal('modal-add-company')" id="btn-add" style="display:none;">➕ เพิ่มบริษัท</button>
+      </div>
+      <div class="card">
+        <div class="card-body" style="padding:0;">
+          <div class="table-wrap" id="table-wrap"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Company Modal -->
+<div class="modal-overlay" id="modal-add-company">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title" id="company-modal-title">➕ เพิ่มบริษัทผู้รับเหมา</span>
+      <button class="modal-close" onclick="closeModal('modal-add-company')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-company-id">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">ชื่อบริษัท <span class="req">*</span></label><input type="text" id="c-name" class="form-control" required></div>
+        <div class="form-group"><label class="form-label">เลขทะเบียนนิติบุคคล</label><input type="text" id="c-tax" class="form-control"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">ชื่อผู้ติดต่อ <span class="req">*</span></label><input type="text" id="c-contact" class="form-control" required></div>
+        <div class="form-group"><label class="form-label">เบอร์โทร</label><input type="text" id="c-phone" class="form-control"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Email</label><input type="email" id="c-email" class="form-control"></div>
+        <div class="form-group">
+          <label class="form-label">สถานะ</label>
+          <select id="c-status" class="form-control"><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option><option value="BLACKLIST">Blacklist</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">วันเริ่มสัญญา</label><input type="date" id="c-start" class="form-control"></div>
+        <div class="form-group"><label class="form-label">วันหมดสัญญา</label><input type="date" id="c-end" class="form-control"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-company')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveCompany()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/db.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  const user = requireAuth('../index.html');
+  if (user) {
+    renderSidebar('../');
+    if (canDo(user, 'manage_contractors')) document.getElementById('btn-add').style.display = '';
+    renderTable();
+  }
+
+  function renderTable() {
+    const companies = dbGetAll('contractor_companies');
+    const contractors = dbGetAll('contractors');
+
+    document.getElementById('table-wrap').innerHTML = companies.length ? `
+      <table class="data-table">
+        <thead><tr>
+          <th>ชื่อบริษัท</th><th>เลขทะเบียน</th><th>ผู้ติดต่อ</th><th>เบอร์โทร</th>
+          <th>จำนวนผู้รับเหมา</th><th>สัญญาหมด</th><th>สถานะ</th><th>จัดการ</th>
+        </tr></thead>
+        <tbody>${companies.map(c => {
+          const count = contractors.filter(ct => ct.company_id === c.id).length;
+          const contractDays = daysUntil(c.contract_end);
+          return `<tr>
+            <td class="td-main">${c.company_name}</td>
+            <td class="td-mono">${c.tax_id||'-'}</td>
+            <td>${c.contact_name||'-'}</td>
+            <td>${c.contact_phone||'-'}</td>
+            <td><span class="badge badge-accent">${count} คน</span></td>
+            <td>${formatDate(c.contract_end)}
+              ${contractDays !== null && contractDays <= 30 ? `<br><span class="badge ${contractDays < 0 ? 'badge-expired' : 'badge-expiring'}">${daysLabel(c.contract_end)}</span>` : ''}
+            </td>
+            <td>${contractorBadge(c.status)}</td>
+            <td>
+              <div class="td-actions">
+                <button class="btn btn-ghost btn-sm" onclick="editCompany('${c.id}')">✏️</button>
+                <a href="index.html?company=${c.id}" class="btn btn-ghost btn-sm">👷 ดูผู้รับเหมา</a>
+              </div>
+            </td>
+          </tr>`;
+        }).join('')}
+        </tbody>
+      </table>` : '<div class="empty-state"><div class="empty-icon">🏢</div><h3>ยังไม่มีบริษัทผู้รับเหมา</h3></div>';
+  }
+
+  function saveCompany() {
+    const name = document.getElementById('c-name').value.trim();
+    const contact = document.getElementById('c-contact').value.trim();
+    if (!name || !contact) { showToast('กรุณากรอกข้อมูลให้ครบ', 'error'); return; }
+    const editId = document.getElementById('edit-company-id').value;
+    const data = {
+      company_name: name,
+      tax_id: document.getElementById('c-tax').value,
+      contact_name: contact,
+      contact_phone: document.getElementById('c-phone').value,
+      contact_email: document.getElementById('c-email').value,
+      status: document.getElementById('c-status').value,
+      contract_start: document.getElementById('c-start').value,
+      contract_end: document.getElementById('c-end').value,
+    };
+    if (editId) {
+      dbUpdate('contractor_companies', editId, data);
+      showToast('อัพเดทข้อมูลบริษัทสำเร็จ', 'success');
+    } else {
+      dbInsert('contractor_companies', data);
+      showToast('เพิ่มบริษัทสำเร็จ', 'success');
+    }
+    closeModal('modal-add-company');
+    renderTable();
+  }
+
+  function editCompany(id) {
+    const c = dbGetById('contractor_companies', id);
+    if (!c) return;
+    document.getElementById('edit-company-id').value = id;
+    document.getElementById('company-modal-title').textContent = '✏️ แก้ไขบริษัท';
+    document.getElementById('c-name').value = c.company_name;
+    document.getElementById('c-tax').value = c.tax_id || '';
+    document.getElementById('c-contact').value = c.contact_name || '';
+    document.getElementById('c-phone').value = c.contact_phone || '';
+    document.getElementById('c-email').value = c.contact_email || '';
+    document.getElementById('c-status').value = c.status;
+    document.getElementById('c-start').value = c.contract_start || '';
+    document.getElementById('c-end').value = c.contract_end || '';
+    openModal('modal-add-company');
+  }
+</script>
+</body>
+</html>

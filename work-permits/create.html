@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สร้าง Work Permit — E-Work Permit System</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  .type-selection { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .type-card {
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface);
+  }
+  .type-card:hover { border-color: var(--accent); background: var(--bg3); }
+  .type-card.active { border-color: var(--accent); background: var(--accent-dim); box-shadow: 0 0 15px var(--accent-dim); }
+  .type-card .icon { font-size: 32px; margin-bottom: 8px; display: block; }
+  .type-card .label { font-weight: 700; color: var(--text); }
+  
+  .ppe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+  .ppe-item {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 11px;
+    background: var(--bg3);
+  }
+  .ppe-item:hover { border-color: var(--accent); }
+  .ppe-item.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+  .ppe-item .icon { font-size: 20px; display: block; margin-bottom: 4px; }
+
+  .review-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .review-table th, .review-table td { padding: 8px; border: 1px solid var(--border); text-align: left; }
+  .review-table th { background: var(--bg3); color: var(--text3); font-weight: 600; width: 30%; }
+</style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-breadcrumb"><a href="../dashboard.html">Dashboard</a> / <a href="index.html">Work Permits</a> /</span>
+        <span class="topbar-title">➕ สร้าง Work Permit ใหม่</span>
+      </div>
+      <div class="topbar-right">
+        <span id="topbar-user" class="text-sm text-muted"></span>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div class="page-header" style="max-width: 800px; margin: 0 auto 24px auto;">
+        <div>
+          <h1>สร้าง Work Permit</h1>
+          <p>กรอกข้อมูลและระบุมาตรการความปลอดภัยให้ครบถ้วน</p>
+        </div>
+        <a href="index.html" class="btn btn-ghost">← กลับ</a>
+      </div>
+
+      <div class="wizard-container" style="max-width: 800px; margin: 0 auto;">
+        <div class="wizard-steps mb-24">
+          <div class="wizard-step active" id="wiz-1">1. ข้อมูลหลัก</div>
+          <div class="wizard-step" id="wiz-2">2. มาตรการ & PPE</div>
+          <div class="wizard-step" id="wiz-3">3. ทีมงาน & เอกสาร</div>
+          <div class="wizard-step" id="wiz-4">4. สรุปผล</div>
+        </div>
+
+        <form id="wp-form">
+          <!-- Step 1: Basic Info -->
+          <div class="wizard-panel active" id="panel-1">
+            <div class="card mb-16">
+              <div class="card-header"><span class="card-title">📋 รายละเอียดงาน</span></div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">บริษัทผู้รับเหมา <span class="req">*</span></label>
+                  <select id="f-company" class="form-control" required onchange="loadContractorsForCompany()">
+                    <option value="">-- เลือกบริษัท --</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">พื้นที่ปฏิบัติงาน <span class="req">*</span></label>
+                  <input type="text" id="f-area" class="form-control" placeholder="เช่น อาคาร A ชั้น 3, ห้องไฟฟ้า" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">รายละเอียดลักษณะงาน <span class="req">*</span></label>
+                  <textarea id="f-desc" class="form-control" rows="3" placeholder="อธิบายงานที่จะทำโดยละเอียด..." required></textarea>
+                </div>
+                <div class="grid-2 gap-16">
+                  <div class="form-group">
+                    <label class="form-label">วันที่เริ่มงาน <span class="req">*</span></label>
+                    <input type="date" id="f-start-date" class="form-control" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">วันที่สิ้นสุด <span class="req">*</span></label>
+                    <input type="date" id="f-end-date" class="form-control" required>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card mb-16">
+              <div class="card-header"><span class="card-title">👤 ผู้ควบคุมงาน</span></div>
+              <div class="card-body">
+                <div class="grid-2 gap-16">
+                  <div class="form-group">
+                    <label class="form-label">ผู้คุมงาน (ผู้รับเหมา) <span class="req">*</span></label>
+                    <input type="text" id="f-supervisor" class="form-control" placeholder="ชื่อ-นามสกุล" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">เบอร์โทรศัพท์</label>
+                    <input type="text" id="f-supervisor-phone" class="form-control" placeholder="08X-XXX-XXXX">
+                  </div>
+                </div>
+                <div class="grid-2 gap-16">
+                  <div class="form-group">
+                    <label class="form-label">เจ้าของงาน (DOWA Owner) <span class="req">*</span></label>
+                    <input type="text" id="f-owner" class="form-control" placeholder="ระบุชื่อพนักงาน DOWA ที่คุมงาน" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">เบอร์โทรศัพท์ DOWA</label>
+                    <input type="text" id="f-owner-phone" class="form-control" placeholder="เบอร์โทรภายใน หรือ มือถือ">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex-end">
+              <button type="button" class="btn btn-primary" onclick="nextStep(2)">ถัดไป: มาตรการความปลอดภัย →</button>
+            </div>
+          </div>
+
+          <!-- Step 2: Safety Measures -->
+          <div class="wizard-panel" id="panel-2">
+            <div class="card mb-16">
+              <div class="card-header"><span class="card-title">🔥 ประเภทงานความเสี่ยงสูง</span></div>
+              <div class="card-body">
+                <div class="type-selection">
+                  <div class="type-card" id="type-hot" onclick="selectType('HOT_WORK')">
+                    <span class="icon">🔥</span>
+                    <span class="label">Hot Work (งานร้อน)</span>
+                    <p class="text-xs text-muted mt-4">งานที่เกิดความร้อนหรือประกายไฟ เช่น เชื่อม, ตัดโลหะ</p>
+                  </div>
+                  <div class="type-card" id="type-cold" onclick="selectType('COLD_WORK')">
+                    <span class="icon">❄️</span>
+                    <span class="label">Cold Work (งานทั่วไป)</span>
+                    <p class="text-xs text-muted mt-4">งานซ่อมบำรุงทั่วไปที่ไม่มีประกายไฟ</p>
+                  </div>
+                </div>
+                <div id="sub-types" class="grid-2 gap-8 mb-16"></div>
+              </div>
+            </div>
+
+            <div class="card mb-16">
+              <div class="card-header"><span class="card-title">⛑️ อุปกรณ์ป้องกันส่วนบุคคล (PPE)</span></div>
+              <div class="card-body">
+                <div class="ppe-grid" id="ppe-container"></div>
+              </div>
+            </div>
+
+            <div class="card mb-16">
+              <div class="card-header"><span class="card-title">🧠 KYM / การวิเคราะห์ความเสี่ยง</span></div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">มาตรการป้องกันและควบคุมอันตราย</label>
+                  <textarea id="f-kym" class="form-control" rows="4" placeholder="ระบุอันตรายที่คาดว่าจะเกิด และมาตรการป้องกัน..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex-between">
+              <button type="button" class="btn btn-ghost" onclick="nextStep(1)">← ย้อนกลับ</button>
+              <button type="button" class="btn btn-primary" onclick="nextStep(3)">ถัดไป: รายชื่อทีมงาน →</button>
+            </div>
+          </div>
+
+          <!-- Step 3: Team & Docs -->
+          <div class="wizard-panel" id="panel-3">
+            <div class="card mb-16">
+              <div class="card-header">
+                <span class="card-title">👷 รายชื่อคนงาน</span>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="openAddWorker()">➕ เพิ่มคนงาน</button>
+              </div>
+              <div class="card-body">
+                <div id="workers-list" class="grid-2 gap-8">
+                  <div class="empty-state" style="grid-column: 1 / -1; padding: 24px;">
+                    <p class="text-muted">ยังไม่ได้ระบุรายชื่อคนงาน</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card mb-16">
+              <div class="card-header"><span class="card-title">📎 เอกสารแนบ</span></div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">อัปโหลดแผนผัง/ใบประเมินความเสี่ยง (จำลอง)</label>
+                  <div style="border: 2px dashed var(--border); padding: 32px; text-align: center; border-radius: 8px; background: var(--bg3);">
+                    <div style="font-size:32px; margin-bottom:8px;">📄</div>
+                    <p class="text-sm text-muted">ลากไฟล์มาวาง หรือ <span class="text-accent" style="cursor:pointer;text-decoration:underline;">เลือกไฟล์</span></p>
+                    <input type="file" id="f-docs" style="display:none;" multiple onchange="handleFiles(this)">
+                  </div>
+                  <div id="file-list" class="mt-12 flex-center gap-8 flex-wrap">
+                    <div class="badge badge-accent">Risk_Assessment.pdf</div>
+                    <div class="badge badge-accent">Site_Plan.jpg</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex-between">
+              <button type="button" class="btn btn-ghost" onclick="nextStep(2)">← ย้อนกลับ</button>
+              <button type="button" class="btn btn-primary" onclick="nextStep(4)">ถัดไป: ตรวจสอบข้อมูล →</button>
+            </div>
+          </div>
+
+          <!-- Step 4: Summary -->
+          <div class="wizard-panel" id="panel-4">
+            <div class="card mb-16">
+              <div class="card-header"><span class="card-title">📄 สรุปข้อมูล Work Permit</span></div>
+              <div class="card-body">
+                <div id="review-content"></div>
+              </div>
+            </div>
+
+            <div class="info-box mb-24">
+              <strong>💡 รหัส Permit ที่ระบบจะสร้าง:</strong> <span id="preview-code" class="mono text-accent">WP-202605-XXX</span>
+            </div>
+
+            <div class="flex-between">
+              <button type="button" class="btn btn-ghost" onclick="nextStep(3)">← ย้อนกลับ</button>
+              <div class="flex-center gap-8">
+                <button type="button" class="btn btn-secondary" onclick="submitPermit('DRAFT')">💾 บันทึกฉบับร่าง</button>
+                <button type="button" class="btn btn-primary" onclick="submitPermit('PENDING_OWNER')">🚀 ส่งขออนุมัติ</button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Worker -->
+<div class="modal-overlay" id="modal-worker">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">👷 ค้นหาคนงาน</span>
+      <button class="modal-close" onclick="closeModal('modal-worker')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="text-xs text-muted mb-12">เฉพาะคนงานที่มีบัตร Active และไม่ติด Blacklist</p>
+      <div id="contractor-selection" class="grid-1 gap-8">
+        <!-- List will be populated -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/db.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  const user = requireAuth('../index.html');
+  let selectedType = 'COLD_WORK';
+  let selectedSubtypes = [];
+  let selectedPPE = [];
+  let selectedWorkers = [];
+
+  if (user) {
+    renderSidebar('../');
+    document.getElementById('topbar-user').textContent = user.full_name;
+    initForm();
+  }
+
+  function initForm() {
+    // Load companies
+    const comps = dbGetAll('contractor_companies').filter(c => c.status === 'ACTIVE');
+    const sel = document.getElementById('f-company');
+    comps.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.company_name;
+      sel.appendChild(opt);
+    });
+
+    // Load PPE
+    const ppeCont = document.getElementById('ppe-container');
+    PPE_OPTIONS.forEach(opt => {
+      const el = document.createElement('div');
+      el.className = 'ppe-item';
+      el.innerHTML = `<span class="icon">${opt.icon}</span>${opt.label}`;
+      el.onclick = () => togglePPE(opt.key, el);
+      ppeCont.appendChild(el);
+    });
+
+    // Default selection
+    selectType('COLD_WORK');
+    document.getElementById('f-start-date').value = todayStr();
+    document.getElementById('f-end-date').value = todayStr();
+  }
+
+  function selectType(type) {
+    selectedType = type;
+    document.getElementById('type-hot').classList.toggle('active', type === 'HOT_WORK');
+    document.getElementById('type-cold').classList.toggle('active', type === 'COLD_WORK');
+    
+    // Sub-types
+    const subCont = document.getElementById('sub-types');
+    subCont.innerHTML = '';
+    const options = type === 'HOT_WORK' ? HOT_WORK_TYPES : COLD_WORK_TYPES;
+    options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-ghost btn-sm';
+      btn.style.justifyContent = 'flex-start';
+      btn.textContent = `☐ ${opt.label}`;
+      btn.onclick = () => toggleSubtype(opt.key, btn);
+      subCont.appendChild(btn);
+    });
+  }
+
+  function toggleSubtype(key, btn) {
+    if (selectedSubtypes.includes(key)) {
+      selectedSubtypes = selectedSubtypes.filter(k => k !== key);
+      btn.textContent = `☐ ${HOT_WORK_TYPES.find(o => o.key === key)?.label || COLD_WORK_TYPES.find(o => o.key === key)?.label}`;
+      btn.classList.remove('btn-secondary');
+    } else {
+      selectedSubtypes.push(key);
+      btn.textContent = `☑ ${HOT_WORK_TYPES.find(o => o.key === key)?.label || COLD_WORK_TYPES.find(o => o.key === key)?.label}`;
+      btn.classList.add('btn-secondary');
+    }
+  }
+
+  function togglePPE(key, el) {
+    if (selectedPPE.includes(key)) {
+      selectedPPE = selectedPPE.filter(k => k !== key);
+      el.classList.remove('active');
+    } else {
+      selectedPPE.push(key);
+      el.classList.add('active');
+    }
+  }
+
+  function nextStep(step) {
+    if (step === 2) {
+      if (!document.getElementById('f-company').value || !document.getElementById('f-area').value) {
+        showToast('กรุณากรอกข้อมูลหลักให้ครบถ้วน', 'warning');
+        return;
+      }
+    }
+    
+    if (step === 4) renderReview();
+
+    document.querySelectorAll('.wizard-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + step).classList.add('active');
+    
+    document.querySelectorAll('.wizard-step').forEach((s, idx) => {
+      s.classList.toggle('active', idx + 1 === step);
+    });
+    window.scrollTo(0, 0);
+  }
+
+  function openAddWorker() {
+    const compId = document.getElementById('f-company').value;
+    if (!compId) { showToast('กรุณาเลือกบริษัทก่อน', 'warning'); return; }
+    
+    const workers = dbGetAll('contractors').filter(c => c.company_id === compId && c.status === 'ACTIVE');
+    const cont = document.getElementById('contractor-selection');
+    cont.innerHTML = '';
+    
+    if (workers.length === 0) {
+      cont.innerHTML = '<p class="text-center text-muted p-16">ไม่พบรายชื่อคนงานในระบบ</p>';
+    } else {
+      workers.forEach(w => {
+        const btn = document.createElement('div');
+        btn.className = 'info-box flex-between cursor-pointer';
+        btn.innerHTML = `
+          <div><strong>${w.first_name} ${w.last_name}</strong><br><small class="text-muted">บัตร: ${w.card_number}</small></div>
+          ${selectedWorkers.some(sw => sw.id === w.id) ? '<span class="text-accent">✓ เลือกแล้ว</span>' : '<button class="btn btn-secondary btn-sm">เลือก</button>'}
+        `;
+        btn.onclick = () => {
+          if (!selectedWorkers.some(sw => sw.id === w.id)) {
+            selectedWorkers.push(w);
+            renderWorkers();
+            closeModal('modal-worker');
+          }
+        };
+        cont.appendChild(btn);
+      });
+    }
+    openModal('modal-worker');
+  }
+
+  function renderWorkers() {
+    const cont = document.getElementById('workers-list');
+    if (selectedWorkers.length === 0) {
+      cont.innerHTML = '<div class="empty-state" style="grid-column:1/-1;padding:24px;"><p class="text-muted">ยังไม่ได้ระบุรายชื่อคนงาน</p></div>';
+      return;
+    }
+    cont.innerHTML = selectedWorkers.map(w => `
+      <div class="info-box flex-between">
+        <div><strong>${w.first_name} ${w.last_name}</strong><br><small class="text-muted">${w.card_number}</small></div>
+        <button type="button" class="btn btn-ghost btn-sm text-red" onclick="removeWorker('${w.id}')">✕</button>
+      </div>
+    `).join('');
+  }
+
+  function removeWorker(id) {
+    selectedWorkers = selectedWorkers.filter(w => w.id !== id);
+    renderWorkers();
+  }
+
+  function renderReview() {
+    const compName = document.getElementById('f-company').options[document.getElementById('f-company').selectedIndex].text;
+    const cont = document.getElementById('review-content');
+    cont.innerHTML = `
+      <table class="review-table">
+        <tr><th>บริษัท</th><td>${compName}</td></tr>
+        <tr><th>พื้นที่</th><td>${document.getElementById('f-area').value}</td></tr>
+        <tr><th>ลักษณะงาน</th><td>${document.getElementById('f-desc').value}</td></tr>
+        <tr><th>ระยะเวลา</th><td>${formatDate(document.getElementById('f-start-date').value)} ถึง ${formatDate(document.getElementById('f-end-date').value)}</td></tr>
+        <tr><th>ประเภทงาน</th><td>${selectedType === 'HOT_WORK' ? '🔥 Hot Work' : '❄️ Cold Work'} (${selectedSubtypes.map(k => {
+          const o = [...HOT_WORK_TYPES, ...COLD_WORK_TYPES].find(i => i.key === k);
+          return o ? o.label : k;
+        }).join(', ') || 'ไม่ได้ระบุ'})</td></tr>
+        <tr><th>PPE</th><td>${selectedPPE.map(k => {
+          const o = PPE_OPTIONS.find(i => i.key === k);
+          return o ? o.icon + ' ' + o.label : k;
+        }).join(', ') || 'ไม่มี'}</td></tr>
+        <tr><th>คนงาน</th><td>${selectedWorkers.length} คน (${selectedWorkers.map(w => w.first_name).join(', ')})</td></tr>
+        <tr><th>KYM</th><td style="white-space:pre-line;">${document.getElementById('f-kym').value || '-'}</td></tr>
+      </table>
+    `;
+    
+    // Generate preview code
+    const datePart = todayStr().replace(/-/g, '');
+    document.getElementById('preview-code').textContent = `WP-${datePart}-XXXX`;
+  }
+
+  function submitPermit(status) {
+    const permit = {
+      contractor_company_id: document.getElementById('f-company').value,
+      contractor_company_name: document.getElementById('f-company').options[document.getElementById('f-company').selectedIndex].text,
+      work_area: document.getElementById('f-area').value,
+      work_description: document.getElementById('f-desc').value,
+      work_type: selectedType,
+      hot_work_types: selectedType === 'HOT_WORK' ? selectedSubtypes : [],
+      cold_work_types: selectedType === 'COLD_WORK' ? selectedSubtypes : [],
+      ppe_required: selectedPPE,
+      start_date: document.getElementById('f-start-date').value,
+      end_date: document.getElementById('f-end-date').value,
+      start_time: '08:00',
+      end_time: '17:00',
+      worker_count: selectedWorkers.length,
+      workers: selectedWorkers.map(w => ({ id: w.id, name: `${w.first_name} ${w.last_name}`, card: w.card_number })),
+      supervisor_name: document.getElementById('f-supervisor').value,
+      supervisor_phone: document.getElementById('f-supervisor-phone').value,
+      dowa_owner_name: document.getElementById('f-owner').value,
+      dowa_owner_phone: document.getElementById('f-owner-phone').value,
+      kym_sheet_data: document.getElementById('f-kym').value,
+      status: status,
+      permit_code: `WP-${todayStr().replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`,
+      created_by: user.id,
+      created_at: new Date().toISOString(),
+      submitted_at: status === 'PENDING_OWNER' ? new Date().toISOString() : null,
+    };
+
+    dbInsert('work_permits', permit);
+    
+    // Add notification
+    if (status === 'PENDING_OWNER') {
+      dbInsert('notifications', {
+        user_id: 'u7', // Default Work Owner demo
+        title: 'Work Permit ใหม่รออนุมัติ',
+        message: `${permit.contractor_company_name} ได้สร้างใบงานใหม่ในพื้นที่ ${permit.work_area}`,
+        type: 'PERMIT_APPROVAL',
+        ref_id: permit.id,
+        status: 'PENDING',
+        created_at: new Date().toISOString()
+      });
+    }
+
+    showToast(status === 'DRAFT' ? '💾 บันทึกฉบับร่างแล้ว' : '🚀 ส่งคำขออนุมัติเรียบร้อย', 'success');
+    setTimeout(() => window.location.href = 'index.html', 1500);
+  }
+</script>
+</body>
+</html>

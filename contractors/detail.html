@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ข้อมูลผู้รับเหมา — E-Work Permit System</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-breadcrumb"><a href="../dashboard.html">Dashboard</a> / <a href="index.html">ผู้รับเหมา</a> /</span>
+        <span class="topbar-title" id="topbar-name">Detail</span>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-secondary btn-sm no-print" id="btn-print-card-top" style="display:none;" onclick="printIDCard()">🪪 Print ID Card</button>
+        <button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨️ Print</button>
+      </div>
+    </header>
+
+    <div class="page-content" id="page-body">
+      <div class="empty-state"><div class="empty-icon">⏳</div><h3>กำลังโหลด...</h3></div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title">✏️ แก้ไขข้อมูล</span>
+      <button class="modal-close" onclick="closeModal('modal-edit')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">ชื่อ</label><input type="text" id="e-fname" class="form-control"></div>
+        <div class="form-group"><label class="form-label">นามสกุล</label><input type="text" id="e-lname" class="form-control"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">เบอร์โทร</label><input type="text" id="e-phone" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" id="e-email" class="form-control"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">สถานะ</label>
+          <select id="e-status" class="form-control">
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+            <option value="BLACKLIST">Blacklist</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">วันหมดอายุบัตร</label><input type="date" id="e-card-expiry" class="form-control"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveEdit()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Cert Modal -->
+<div class="modal-overlay" id="modal-cert">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">➕ เพิ่มใบเซอร์</span>
+      <button class="modal-close" onclick="closeModal('modal-cert')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">ประเภท</label>
+          <select id="c-type" class="form-control">
+            <option value="Safety">Safety Training</option><option value="HotWork">Hot Work</option>
+            <option value="Electrical">Electrical</option><option value="Confined">Confined Space</option>
+            <option value="Height">Working at Height</option><option value="Chemical">Chemical</option><option value="Other">อื่นๆ</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">ชื่อใบเซอร์ <span class="req">*</span></label><input type="text" id="c-name" class="form-control"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">วันออก</label><input type="date" id="c-issued" class="form-control"></div>
+        <div class="form-group"><label class="form-label">วันหมดอายุ <span class="req">*</span></label><input type="date" id="c-expiry" class="form-control"></div>
+      </div>
+      <div class="form-group"><label class="form-label">หน่วยงานออก</label><input type="text" id="c-issuer" class="form-control"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-cert')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveCert()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Training Modal -->
+<div class="modal-overlay" id="modal-training">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">➕ บันทึกการอบรม</span>
+      <button class="modal-close" onclick="closeModal('modal-training')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">หลักสูตร <span class="req">*</span></label><input type="text" id="t-name" class="form-control" placeholder="ชื่อหลักสูตร"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">วันที่อบรม</label><input type="date" id="t-date" class="form-control"></div>
+        <div class="form-group"><label class="form-label">ผู้สอน/หน่วยงาน</label><input type="text" id="t-trainer" class="form-control"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">คะแนนที่ได้</label><input type="number" id="t-score" class="form-control" min="0" max="100" value="0"></div>
+        <div class="form-group"><label class="form-label">เกณฑ์ผ่าน</label><input type="number" id="t-pass" class="form-control" min="0" max="100" value="70"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-training')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveTraining()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/db.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  const user = requireAuth('../index.html');
+  let contractor;
+
+  if (user) {
+    renderSidebar('../');
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    if (!id) window.location.href = 'index.html';
+    else loadContractor(id);
+  }
+
+  function loadContractor(id) {
+    contractor = dbGetById('contractors', id);
+    if (!contractor) {
+      document.getElementById('page-body').innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div><h3>ไม่พบข้อมูล</h3></div>';
+      return;
+    }
+    document.getElementById('topbar-name').textContent = `${contractor.first_name} ${contractor.last_name}`;
+    if (canDo(user, 'print_card')) {
+      document.getElementById('btn-print-card-top').style.display = 'inline-block';
+    }
+    renderPage();
+  }
+
+  function renderPage() {
+    const company = dbGetById('contractor_companies', contractor.company_id);
+    const certs = dbWhere('contractor_certificates', { contractor_id: contractor.id });
+    const trainings = dbWhere('training_records', { contractor_id: contractor.id });
+    const permits = dbGetAll('permit_workers')
+      .filter(pw => pw.contractor_id === contractor.id)
+      .map(pw => ({ ...pw, permit: dbGetById('work_permits', pw.permit_id) }))
+      .filter(pw => pw.permit);
+
+    const cardDays = daysUntil(contractor.card_expiry_date);
+    const isCanManage = canDo(user, 'manage_contractors');
+
+    document.getElementById('page-body').innerHTML = `
+      <div class="page-header">
+        <div class="flex-center gap-16">
+          <div style="width:72px;height:72px;border-radius:50%;background:var(--surface2);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">
+            ${contractor.photo_url ? `<img src="${contractor.photo_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : '👷'}
+          </div>
+          <div>
+            <h1>${contractor.first_name} ${contractor.last_name}</h1>
+            <div class="flex-center gap-8 mt-4">
+              ${contractorBadge(contractor.status)}
+              <span class="badge badge-accent">${company?.company_name || '-'}</span>
+              <span class="text-muted text-sm">บัตร: <span class="mono text-accent">${contractor.card_number || '-'}</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="flex-center gap-8 no-print">
+          ${isCanManage ? `<button class="btn btn-secondary" onclick="openEdit()">✏️ แก้ไข</button>` : ''}
+          ${canDo(user,'issue_id_card') ? `<button class="btn btn-primary" onclick="openModal('id-card-modal')">🪪 ดูบัตร</button>` : ''}
+        </div>
+      </div>
+
+      <!-- Tab Nav -->
+      <div class="tab-nav">
+        <button class="tab-btn active" data-tab="tab-info" onclick="switchTab(this)">📄 ข้อมูล</button>
+        <button class="tab-btn" data-tab="tab-certs" onclick="switchTab(this)">📄 ใบเซอร์ (${certs.length})</button>
+        <button class="tab-btn" data-tab="tab-training" onclick="switchTab(this)">📚 การอบรม (${trainings.length})</button>
+        <button class="tab-btn" data-tab="tab-history" onclick="switchTab(this)">🪪 ประวัติ WP (${permits.length})</button>
+      </div>
+
+      <!-- Info Tab -->
+      <div id="tab-info" class="tab-pane active">
+        <div class="grid-2 gap-16">
+          <div class="card">
+            <div class="card-header"><span class="card-title">📋 ข้อมูลส่วนตัว</span></div>
+            <div class="card-body">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div><div class="form-label">ชื่อ-นามสกุล</div><div class="font-bold">${contractor.first_name} ${contractor.last_name}</div></div>
+                <div><div class="form-label">บริษัท</div><div class="text-accent">${company?.company_name||'-'}</div></div>
+                <div><div class="form-label">เลขบัตรประชาชน</div><div class="mono text-sm">${contractor.national_id||'-'}</div></div>
+                <div><div class="form-label">สัญชาติ</div><div>${contractor.nationality||'-'}</div></div>
+                <div><div class="form-label">วันเกิด</div><div>${formatDate(contractor.birth_date)}</div></div>
+                <div><div class="form-label">เบอร์โทร</div><div>${contractor.phone||'-'}</div></div>
+                <div><div class="form-label">Email</div><div>${contractor.email||'-'}</div></div>
+                <div><div class="form-label">PDPA Consent</div><div>${contractor.pdpa_consent_at ? `<span class="text-green">✓ ${formatDate(contractor.pdpa_consent_at)}</span>` : '<span class="text-muted">ยังไม่ยินยอม</span>'}</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">🪪 ข้อมูลบัตรผู้รับเหมา</span></div>
+            <div class="card-body">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div><div class="form-label">เลขบัตร</div><div class="mono text-accent font-bold">${contractor.card_number||'-'}</div></div>
+                <div><div class="form-label">สถานะ</div>${contractorBadge(contractor.status)}</div>
+                <div><div class="form-label">วันออกบัตร</div><div>${formatDate(contractor.card_issue_date)}</div></div>
+                <div><div class="form-label">วันหมดอายุบัตร</div>
+                  <div>${formatDate(contractor.card_expiry_date)}
+                    ${cardDays !== null && cardDays <= 30 ? `<br><span class="badge ${cardDays < 0 ? 'badge-expired' : 'badge-expiring'}">${daysLabel(contractor.card_expiry_date)}</span>` : ''}
+                  </div>
+                </div>
+              </div>
+              ${cardDays !== null && cardDays <= 30 ? `<div class="warn-box mt-16"><strong>⚠️ บัตรใกล้หมดอายุ!</strong> กรุณาต่ออายุก่อนวันที่ ${formatDate(contractor.card_expiry_date)}</div>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Certs Tab -->
+      <div id="tab-certs" class="tab-pane">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">📄 ใบรับรอง (Certificates)</span>
+            ${isCanManage ? `<button class="btn btn-secondary btn-sm" onclick="openModal('modal-cert')">➕ เพิ่ม</button>` : ''}
+          </div>
+          <div class="card-body" style="padding:0;">
+            ${certs.length > 0 ? `<table class="data-table"><thead><tr><th>ประเภท</th><th>ชื่อใบเซอร์</th><th>หน่วยงาน</th><th>วันออก</th><th>วันหมดอายุ</th><th>สถานะ</th></tr></thead><tbody>
+              ${certs.map(cert => `<tr>
+                <td><span class="badge badge-accent">${cert.cert_type}</span></td>
+                <td class="td-main">${cert.cert_name}</td>
+                <td>${cert.issued_by||'-'}</td>
+                <td>${formatDate(cert.issued_date)}</td>
+                <td>${formatDate(cert.expiry_date)}<br><span class="text-xs text-muted">${daysLabel(cert.expiry_date)}</span></td>
+                <td>${certBadge(cert.status)}</td>
+              </tr>`).join('')}
+            </tbody></table>` : '<div class="empty-state" style="padding:30px;"><div class="empty-icon" style="font-size:24px;">📄</div><p>ยังไม่มีใบเซอร์</p></div>'}
+          </div>
+        </div>
+      </div>
+
+      <!-- Training Tab -->
+      <div id="tab-training" class="tab-pane">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">📚 ประวัติการอบรม</span>
+            ${isCanManage ? `<button class="btn btn-secondary btn-sm" onclick="openModal('modal-training')">➕ บันทึก</button>` : ''}
+          </div>
+          <div class="card-body" style="padding:0;">
+            ${trainings.length > 0 ? `<table class="data-table"><thead><tr><th>หลักสูตร</th><th>วันที่</th><th>ผู้สอน</th><th>คะแนน</th><th>ผล</th></tr></thead><tbody>
+              ${trainings.map(t => `<tr>
+                <td class="td-main">${t.training_name}</td>
+                <td>${formatDate(t.training_date)}</td>
+                <td>${t.trainer||'-'}</td>
+                <td>${t.score}/${t.pass_score}</td>
+                <td>${t.passed ? '<span class="badge badge-approved">✓ ผ่าน</span>' : '<span class="badge badge-rejected">✗ ไม่ผ่าน</span>'}</td>
+              </tr>`).join('')}
+            </tbody></table>` : '<div class="empty-state" style="padding:30px;"><div class="empty-icon" style="font-size:24px;">📚</div><p>ยังไม่มีประวัติการอบรม</p></div>'}
+          </div>
+        </div>
+      </div>
+
+      <!-- WP History Tab -->
+      <div id="tab-history" class="tab-pane">
+        <div class="card">
+          <div class="card-header"><span class="card-title">🪪 ประวัติ Work Permit</span></div>
+          <div class="card-body" style="padding:0;">
+            ${permits.length > 0 ? `<table class="data-table"><thead><tr><th>รหัส Permit</th><th>พื้นที่</th><th>ประเภท</th><th>วันที่</th><th>Check In</th><th>Check Out</th><th>สถานะ</th></tr></thead><tbody>
+              ${permits.map(pw => `<tr onclick="window.location='../work-permits/detail.html?id=${pw.permit.id}'" style="cursor:pointer;">
+                <td class="td-mono">${pw.permit.permit_code}</td>
+                <td>${pw.permit.work_area}</td>
+                <td>${pw.permit.work_type === 'HOT_WORK' ? '<span class="badge badge-hot">🔥</span>' : '<span class="badge badge-cold">❄️</span>'}</td>
+                <td>${formatDate(pw.date)}</td>
+                <td>${pw.check_in||'-'}</td>
+                <td>${pw.check_out||'-'}</td>
+                <td>${permitBadge(pw.permit.status)}</td>
+              </tr>`).join('')}
+            </tbody></table>` : '<div class="empty-state" style="padding:30px;"><div class="empty-icon" style="font-size:24px;">🪪</div><p>ยังไม่มีประวัติ</p></div>'}
+          </div>
+        </div>
+      </div>
+
+      <!-- ID Card Preview (always shown) -->
+      <div class="card mt-16 no-print" id="id-card-section">
+        <div class="card-header"><span class="card-title">🪪 Preview บัตรผู้รับเหมา</span></div>
+        <div class="card-body" style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;">
+          <div class="id-card">
+            <div class="id-card-header">
+              <div><div class="company">DOWA THERMOTECH (THAILAND)</div><div class="card-type">CONTRACTOR ID CARD</div></div>
+              <span style="font-size:10px;font-weight:700;color:rgba(0,0,0,0.6);">${contractor.card_number||'PENDING'}</span>
+            </div>
+            <div class="id-card-body">
+              <div class="id-card-photo">👷</div>
+              <div class="id-card-info">
+                <div class="id-card-name">${contractor.first_name} ${contractor.last_name}</div>
+                <div class="id-card-company">${company?.company_name||'-'}</div>
+                <div class="id-card-field">บัตร: <span class="mono">${contractor.card_number||'-'}</span></div>
+                <div class="id-card-field">หมดอายุ: <span>${formatDate(contractor.card_expiry_date)}</span></div>
+                <div class="id-card-field">สัญชาติ: <span>${contractor.nationality||'-'}</span></div>
+              </div>
+            </div>
+            <div class="id-card-footer">
+              <div>
+                <div style="font-size:10px;color:var(--text3);">ออกโดย: HR Department</div>
+                <div style="font-size:10px;color:var(--text3);">วันออกบัตร: ${formatDate(contractor.card_issue_date)}</div>
+              </div>
+              <div class="id-card-qr" style="background:#fff;padding:4px;border-radius:4px;">
+                ${generateQRPlaceholder(contractor.card_number||contractor.id)}
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="info-box" style="max-width:280px;">
+              <strong>QR Code:</strong> สแกนเพื่อตรวจสอบสถานะบัตร<br>
+              รหัส: <span class="mono">${contractor.card_number||contractor.id}</span>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function switchTab(btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab)?.classList.add('active');
+  }
+
+  function openEdit() {
+    document.getElementById('e-fname').value = contractor.first_name;
+    document.getElementById('e-lname').value = contractor.last_name;
+    document.getElementById('e-phone').value = contractor.phone || '';
+    document.getElementById('e-email').value = contractor.email || '';
+    document.getElementById('e-status').value = contractor.status;
+    document.getElementById('e-card-expiry').value = contractor.card_expiry_date || '';
+    openModal('modal-edit');
+  }
+
+  function saveEdit() {
+    dbUpdate('contractors', contractor.id, {
+      first_name: document.getElementById('e-fname').value,
+      last_name: document.getElementById('e-lname').value,
+      phone: document.getElementById('e-phone').value,
+      email: document.getElementById('e-email').value,
+      status: document.getElementById('e-status').value,
+      card_expiry_date: document.getElementById('e-card-expiry').value,
+    });
+    closeModal('modal-edit');
+    showToast('บันทึกข้อมูลสำเร็จ', 'success');
+    loadContractor(contractor.id);
+  }
+
+  function saveCert() {
+    const name = document.getElementById('c-name').value.trim();
+    const expiry = document.getElementById('c-expiry').value;
+    if (!name || !expiry) { showToast('กรุณากรอกข้อมูลให้ครบ', 'error'); return; }
+    const days = daysUntil(expiry);
+    dbInsert('contractor_certificates', {
+      contractor_id: contractor.id,
+      cert_type: document.getElementById('c-type').value,
+      cert_name: name,
+      issued_date: document.getElementById('c-issued').value,
+      expiry_date: expiry,
+      issued_by: document.getElementById('c-issuer').value,
+      status: days < 0 ? 'EXPIRED' : days <= 30 ? 'EXPIRING' : 'VALID',
+      verified_by: user.id,
+      verified_at: new Date().toISOString(),
+    });
+    closeModal('modal-cert');
+    showToast('เพิ่มใบเซอร์สำเร็จ', 'success');
+    loadContractor(contractor.id);
+  }
+
+  function saveTraining() {
+    const name = document.getElementById('t-name').value.trim();
+    if (!name) { showToast('กรุณากรอกชื่อหลักสูตร', 'error'); return; }
+    const score = parseInt(document.getElementById('t-score').value) || 0;
+    const pass = parseInt(document.getElementById('t-pass').value) || 70;
+    dbInsert('training_records', {
+      contractor_id: contractor.id,
+      training_name: name,
+      training_date: document.getElementById('t-date').value || todayStr(),
+      score: score,
+      pass_score: pass,
+      passed: score >= pass,
+      trainer: document.getElementById('t-trainer').value,
+      cert_url: '',
+    });
+    closeModal('modal-training');
+    showToast('บันทึกการอบรมสำเร็จ', 'success');
+    loadContractor(contractor.id);
+  }
+
+  function printIDCard() {
+    window.open(`print-card.html?id=${contractor.id}`, '_blank');
+  }
+</script>
+</body>
+</html>

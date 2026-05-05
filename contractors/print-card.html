@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>พิมพ์บัตรประจำตัวผู้รับเหมา — E-Work Permit System</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  body { background: #fff; padding: 0; margin: 0; color: #000; }
+  .print-container { padding: 40px; display: flex; flex-direction: column; align-items: center; gap: 40px; }
+  
+  .id-card {
+    width: 325px; height: 500px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    background: #fcfcfc;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  
+  .card-header-print {
+    background: #002D62; /* DOWA Dark Blue */
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+  }
+  .card-header-print .logo { font-size: 24px; font-weight: 800; letter-spacing: 2px; }
+  .card-header-print .title { font-size: 10px; text-transform: uppercase; margin-top: 4px; opacity: 0.8; }
+  
+  .card-body-print {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+  
+  .photo-box {
+    width: 120px; height: 140px;
+    border: 2px solid #002D62;
+    background: #eee;
+    margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 48px; color: #ccc;
+  }
+  
+  .name-print { font-size: 18px; font-weight: 700; color: #000; text-align: center; margin-bottom: 4px; }
+  .company-print { font-size: 12px; color: #666; margin-bottom: 16px; }
+  
+  .card-info { width: 100%; border-top: 1px dashed #ccc; padding-top: 16px; }
+  .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 11px; }
+  .info-label { color: #888; }
+  .info-val { font-weight: 600; }
+  
+  .card-footer-print {
+    background: #fff;
+    padding: 16px;
+    border-top: 1px solid #eee;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  
+  .qr-box { width: 60px; height: 60px; background: #fff; border: 1px solid #ddd; }
+  
+  @media print {
+    .no-print { display: none !important; }
+    .print-container { padding: 0; gap: 20px; }
+    .id-card { box-shadow: none; border: 1px solid #000; page-break-inside: avoid; }
+    body { background: #fff; }
+  }
+</style>
+</head>
+<body>
+<div class="no-print" style="background:var(--bg2);padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <a href="index.html" class="btn btn-ghost btn-sm">← กลับ</a>
+    <h1 style="font-size:16px;margin:0;">Print ID Card Preview</h1>
+  </div>
+  <button class="btn btn-primary" onclick="window.print()">🖨️ พิมพ์บัตร (Print)</button>
+</div>
+
+<div class="print-container" id="print-area">
+  <!-- Front Card -->
+  <div class="id-card">
+    <div class="card-header-print">
+      <div class="logo">DOWA</div>
+      <div class="title">Contractor ID Card</div>
+    </div>
+    <div class="card-body-print">
+      <div class="photo-box">👤</div>
+      <div class="name-print" id="p-name">Loading...</div>
+      <div class="company-print" id="p-company">Loading...</div>
+      
+      <div class="card-info">
+        <div class="info-row"><span class="info-label">Card No.</span><span class="info-val" id="p-card-no">-</span></div>
+        <div class="info-row"><span class="info-label">Issue Date</span><span class="info-val" id="p-issue">-</span></div>
+        <div class="info-row"><span class="info-label">Expiry Date</span><span class="info-val" id="p-expiry">-</span></div>
+      </div>
+    </div>
+    <div class="card-footer-print">
+      <div class="qr-box" id="p-qr"></div>
+      <div style="text-align:right;">
+        <div style="font-size:8px;color:#888;">Authorized Signature</div>
+        <div style="height:30px;"></div>
+        <div style="font-size:9px;font-weight:600;border-top:1px solid #000;padding-top:2px;">DOWA Safety Dept.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Back Card -->
+  <div class="id-card">
+    <div class="card-header-print" style="background:#444;padding:12px;">
+      <div style="font-size:14px;font-weight:700;">Safety Rules</div>
+    </div>
+    <div style="padding:20px;font-size:10px;line-height:1.6;">
+      <ol style="padding-left:16px;">
+        <li>ต้องสวมใส่อุปกรณ์ PPE ตามที่กำหนดไว้ในใบอนุญาตตลอดเวลา</li>
+        <li>ห้ามสูบบุหรี่ในบริเวณที่ไม่ได้กำหนดไว้</li>
+        <li>แจ้งเจ้าหน้าที่ทันทีเมื่อเกิดอุบัติเหตุหรือเหตุการณ์เกือบเกิดอุบัติเหตุ</li>
+        <li>รักษาระเบียบวินัยและทำความสะอาดพื้นที่หลังเสร็จงาน</li>
+        <li>บัตรนี้ใช้สำหรับผ่านเข้า-ออกพื้นที่บริษัท โดวะ เทอร์โมเทค เท่านั้น</li>
+      </ol>
+      <div style="margin-top:32px;text-align:center;">
+        <div style="font-size:11px;font-weight:700;margin-bottom:4px;">Emergency Contact</div>
+        <div style="font-size:14px;font-weight:700;color:#d00;">02-XXX-XXXX Ext. 191</div>
+        <div style="margin-top:40px;color:#888;font-size:8px;">If found, please return to DOWA Human Resources Dept.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/db.js"></script>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  if (id) {
+    const contractor = dbGetById('contractors', id);
+    if (contractor) {
+      const company = dbGetById('contractor_companies', contractor.company_id);
+      document.getElementById('p-name').textContent = `${contractor.first_name} ${contractor.last_name}`;
+      document.getElementById('p-company').textContent = company?.company_name || '-';
+      document.getElementById('p-card-no').textContent = contractor.card_number || '-';
+      document.getElementById('p-issue').textContent = contractor.card_issue_date || '-';
+      document.getElementById('p-expiry').textContent = contractor.card_expiry_date || '-';
+      
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${contractor.card_number || contractor.id}`;
+      document.getElementById('p-qr').innerHTML = `<img src="${qrUrl}" alt="QR" width="60">`;
+    }
+  }
+</script>
+</body>
+</html>

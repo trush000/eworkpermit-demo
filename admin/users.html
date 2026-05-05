@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ผู้ใช้งาน — E-Work Permit System</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-breadcrumb"><a href="../dashboard.html">Dashboard</a> /</span>
+        <span class="topbar-title">👥 ผู้ใช้งาน</span>
+      </div>
+    </header>
+    <div class="page-content">
+      <div class="page-header">
+        <div><h1>จัดการผู้ใช้งาน</h1><p>เพิ่ม แก้ไข และกำหนดสิทธิ์การใช้งาน</p></div>
+        <button class="btn btn-primary" onclick="openAddUser()">➕ เพิ่มผู้ใช้</button>
+      </div>
+
+      <!-- Permission Matrix -->
+      <div class="card mb-16">
+        <div class="card-header"><span class="card-title">🔐 Permission Matrix</span></div>
+        <div class="card-body" style="padding:0;overflow-x:auto;">
+          <table class="data-table">
+            <thead><tr>
+              <th>ฟังก์ชัน</th>
+              <th>Admin</th><th>Safety Officer</th><th>Work Owner</th><th>Area Owner</th><th>HR Manager</th><th>Guard</th>
+            </tr></thead>
+            <tbody id="perm-matrix"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Users Table -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">👥 รายชื่อผู้ใช้งาน</span></div>
+        <div class="card-body" style="padding:0;">
+          <div class="table-wrap" id="users-table"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- User Modal -->
+<div class="modal-overlay" id="modal-user">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title" id="user-modal-title">➕ เพิ่มผู้ใช้งาน</span>
+      <button class="modal-close" onclick="closeModal('modal-user')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-user-id">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">รหัสพนักงาน</label><input type="text" id="u-emp-id" class="form-control" placeholder="EMP001"></div>
+        <div class="form-group"><label class="form-label">ชื่อ-นามสกุล <span class="req">*</span></label><input type="text" id="u-name" class="form-control" required></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Email <span class="req">*</span></label><input type="email" id="u-email" class="form-control" required></div>
+        <div class="form-group"><label class="form-label">Password</label><input type="password" id="u-pass" class="form-control" placeholder="ปล่อยว่างถ้าไม่เปลี่ยน"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Role <span class="req">*</span></label>
+          <select id="u-role" class="form-control">
+            <option value="ADMIN">Admin</option>
+            <option value="SAFETY">Safety Officer</option>
+            <option value="WORK_OWNER">Work Owner</option>
+            <option value="AREA_OWNER">Area Owner</option>
+            <option value="HR_MGR">HR Manager</option>
+            <option value="GUARD">Guard</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">ฝ่าย/แผนก</label><input type="text" id="u-dept" class="form-control"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">เบอร์โทร</label><input type="text" id="u-phone" class="form-control"></div>
+        <div class="form-group">
+          <label class="form-label">สถานะ</label>
+          <select id="u-active" class="form-control"><option value="1">Active</option><option value="0">Inactive</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-user')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveUser()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/db.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  const user = requireAuth('../index.html');
+  if (user) {
+    renderSidebar('../');
+    if (user.role !== 'ADMIN') {
+      showToast('เฉพาะ Admin เท่านั้น', 'error');
+      setTimeout(() => window.location.href = '../dashboard.html', 1500);
+    }
+    renderPermMatrix();
+    renderUsersTable();
+  }
+
+  function renderPermMatrix() {
+    const perms = [
+      { label: 'สร้าง Work Permit', admin: true, safety: true, work_owner: true, area_owner: false, hr: false, guard: false },
+      { label: 'ดู Work Permit ทั้งหมด', admin: true, safety: true, work_owner: false, area_owner: false, hr: true, guard: false },
+      { label: 'อนุมัติ Step 1 (เจ้าของงาน)', admin: true, safety: false, work_owner: true, area_owner: false, hr: false, guard: false },
+      { label: 'อนุมัติ Step 2 (เจ้าของพื้นที่)', admin: true, safety: false, work_owner: false, area_owner: true, hr: false, guard: false },
+      { label: 'อนุมัติ Step 3 (จป.Safety)', admin: true, safety: true, work_owner: false, area_owner: false, hr: false, guard: false },
+      { label: 'อนุมัติ Step 4 (ผจก.)', admin: true, safety: false, work_owner: false, area_owner: false, hr: true, guard: false },
+      { label: 'จัดการ Contractor', admin: true, safety: true, work_owner: false, area_owner: false, hr: true, guard: false },
+      { label: 'ออกบัตรผู้รับเหมา', admin: true, safety: false, work_owner: false, area_owner: false, hr: true, guard: false },
+      { label: 'ดู Dashboard & Reports', admin: true, safety: true, work_owner: false, area_owner: false, hr: true, guard: false },
+      { label: 'สแกน QR บัตรผู้รับเหมา', admin: true, safety: true, work_owner: false, area_owner: false, hr: false, guard: true },
+      { label: 'จัดการผู้ใช้งาน', admin: true, safety: false, work_owner: false, area_owner: false, hr: false, guard: false },
+    ];
+
+    const c = (v) => `<td style="text-align:center;">${v ? '<span class="text-green font-bold">✓</span>' : '<span class="text-muted">–</span>'}</td>`;
+    document.getElementById('perm-matrix').innerHTML = perms.map(p =>
+      `<tr><td class="td-main">${p.label}</td>${c(p.admin)}${c(p.safety)}${c(p.work_owner)}${c(p.area_owner)}${c(p.hr)}${c(p.guard)}</tr>`
+    ).join('');
+  }
+
+  function renderUsersTable() {
+    const users = dbGetAll('users');
+    document.getElementById('users-table').innerHTML = `
+      <table class="data-table">
+        <thead><tr><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>Email</th><th>Role</th><th>ฝ่าย</th><th>เข้าใช้ล่าสุด</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+        <tbody>${users.map(u => `
+          <tr>
+            <td class="td-mono">${u.employee_id}</td>
+            <td class="td-main">${u.full_name}</td>
+            <td>${u.email}</td>
+            <td><span class="badge badge-accent">${ROLES[u.role]?.icon||''} ${ROLES[u.role]?.label||u.role}</span></td>
+            <td>${u.department||'-'}</td>
+            <td class="text-muted text-sm">${formatDateTime(u.last_login_at)}</td>
+            <td>${u.is_active ? '<span class="badge badge-active">Active</span>' : '<span class="badge badge-inactive">Inactive</span>'}</td>
+            <td>
+              <div class="td-actions">
+                <button class="btn btn-ghost btn-sm" onclick="editUser('${u.id}')">✏️</button>
+                ${u.id !== user.id ? `<button class="btn btn-ghost btn-sm" onclick="toggleActive('${u.id}',${u.is_active})">⚙️</button>` : '<span class="text-xs text-muted">(ตัวคุณ)</span>'}
+              </div>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  function openAddUser() {
+    document.getElementById('edit-user-id').value = '';
+    document.getElementById('user-modal-title').textContent = '➕ เพิ่มผู้ใช้งาน';
+    ['u-emp-id','u-name','u-email','u-pass','u-dept','u-phone'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('u-role').value = 'WORK_OWNER';
+    document.getElementById('u-active').value = '1';
+    openModal('modal-user');
+  }
+
+  function editUser(id) {
+    const u = dbGetById('users', id);
+    if (!u) return;
+    document.getElementById('edit-user-id').value = id;
+    document.getElementById('user-modal-title').textContent = '✏️ แก้ไขผู้ใช้งาน';
+    document.getElementById('u-emp-id').value = u.employee_id || '';
+    document.getElementById('u-name').value = u.full_name;
+    document.getElementById('u-email').value = u.email;
+    document.getElementById('u-pass').value = '';
+    document.getElementById('u-role').value = u.role;
+    document.getElementById('u-dept').value = u.department || '';
+    document.getElementById('u-phone').value = u.phone || '';
+    document.getElementById('u-active').value = u.is_active ? '1' : '0';
+    openModal('modal-user');
+  }
+
+  function saveUser() {
+    const name = document.getElementById('u-name').value.trim();
+    const email = document.getElementById('u-email').value.trim();
+    if (!name || !email) { showToast('กรุณากรอกข้อมูลให้ครบ', 'error'); return; }
+    const editId = document.getElementById('edit-user-id').value;
+    const data = {
+      employee_id: document.getElementById('u-emp-id').value,
+      full_name: name,
+      email: email,
+      role: document.getElementById('u-role').value,
+      department: document.getElementById('u-dept').value,
+      phone: document.getElementById('u-phone').value,
+      is_active: document.getElementById('u-active').value === '1',
+    };
+    const pass = document.getElementById('u-pass').value;
+    if (pass) data.password = pass;
+
+    if (editId) {
+      dbUpdate('users', editId, data);
+      showToast('อัพเดทผู้ใช้งานสำเร็จ', 'success');
+    } else {
+      if (!pass) { showToast('กรุณากำหนดรหัสผ่าน', 'error'); return; }
+      dbInsert('users', data);
+      showToast('เพิ่มผู้ใช้งานสำเร็จ', 'success');
+    }
+    closeModal('modal-user');
+    renderUsersTable();
+  }
+
+  function toggleActive(id, current) {
+    dbUpdate('users', id, { is_active: !current });
+    showToast(`เปลี่ยนสถานะเป็น ${!current ? 'Active' : 'Inactive'}`, 'success');
+    renderUsersTable();
+  }
+</script>
+</body>
+</html>

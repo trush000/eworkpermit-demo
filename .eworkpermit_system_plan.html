@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Work Permit & Contractor Control System — Project Plan</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #0f1525;
+    --bg3: #151d32;
+    --surface: #1a2340;
+    --surface2: #1f2a4a;
+    --border: #2a3a5c;
+    --accent: #00d4ff;
+    --accent2: #0088cc;
+    --gold: #f5a623;
+    --green: #00e676;
+    --red: #ff4757;
+    --purple: #a855f7;
+    --text: #e8edf5;
+    --text2: #8899bb;
+    --text3: #5566aa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #0a0e1a 0%, #0f1a35 50%, #0a1428 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    gap: 16px;
+  }
+
+  .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-badge {
+    background: var(--accent);
+    color: #000;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+  }
+
+  .header h1 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.3px;
+  }
+
+  .header-meta {
+    font-size: 12px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* NAV TABS */
+  .nav-tabs {
+    display: flex;
+    padding: 0 32px;
+    gap: 2px;
+    border-top: 1px solid var(--border);
+    overflow-x: auto;
+  }
+
+  .tab-btn {
+    padding: 10px 20px;
+    font-size: 13px;
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+    font-weight: 500;
+    color: var(--text3);
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  .tab-btn:hover { color: var(--text2); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* MAIN LAYOUT */
+  .main { max-width: 1400px; margin: 0 auto; padding: 32px; }
+
+  .section { display: none; }
+  .section.active { display: block; animation: fadeIn 0.3s ease; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* OVERVIEW CARDS */
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .card.accent::before { background: var(--accent); }
+  .card.gold::before { background: var(--gold); }
+  .card.green::before { background: var(--green); }
+  .card.purple::before { background: var(--purple); }
+  .card.red::before { background: var(--red); }
+
+  .card-icon { font-size: 28px; margin-bottom: 10px; }
+  .card-title { font-size: 13px; color: var(--text2); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card-value { font-size: 22px; font-weight: 700; color: var(--text); }
+  .card-desc { font-size: 13px; color: var(--text3); margin-top: 8px; }
+
+  /* SECTION HEADERS */
+  .sec-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sec-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .sec-header .badge {
+    background: var(--accent);
+    color: #000;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* FEATURE BLOCKS */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  .feature-card h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .feature-list { list-style: none; }
+  .feature-list li {
+    padding: 6px 0;
+    color: var(--text2);
+    font-size: 13px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .feature-list li:last-child { border-bottom: none; }
+  .feature-list li::before {
+    content: '▸';
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* FLOW DIAGRAM */
+  .flow-container { margin: 24px 0; }
+
+  .flow-steps {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    overflow-x: auto;
+    padding: 16px 0;
+  }
+
+  .flow-step {
+    min-width: 160px;
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    position: relative;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  .flow-step:hover { border-color: var(--accent); transform: translateY(-2px); }
+
+  .flow-step + .flow-step { margin-left: 8px; }
+  .flow-step + .flow-step::before {
+    content: '→';
+    position: absolute;
+    left: -14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent);
+    font-size: 16px;
+  }
+
+  .flow-num {
+    width: 24px; height: 24px;
+    background: var(--accent);
+    color: #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .flow-role {
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .flow-action {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .flow-detail {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+
+  /* DB TABLES */
+  .db-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 16px;
+  }
+
+  .db-table {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .db-table-header {
+    background: var(--surface2);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .db-table-header h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .db-pk {
+    font-size: 10px;
+    background: var(--gold);
+    color: #000;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+
+  .db-fk {
+    font-size: 10px;
+    background: var(--purple);
+    color: #fff;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+
+  .db-fields { list-style: none; }
+  .db-field {
+    display: flex;
+    align-items: center;
+    padding: 7px 16px;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    font-size: 12px;
+  }
+  .db-field:last-child { border-bottom: none; }
+
+  .field-name {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text);
+    min-width: 140px;
+  }
+
+  .field-type {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--green);
+    min-width: 80px;
+  }
+
+  .field-desc {
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  /* TIMELINE */
+  .timeline { position: relative; padding-left: 24px; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 7px; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+
+  .tl-item {
+    position: relative;
+    margin-bottom: 24px;
+  }
+
+  .tl-dot {
+    position: absolute;
+    left: -20px;
+    top: 4px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    background: var(--bg);
+  }
+
+  .tl-item.done .tl-dot { background: var(--green); border-color: var(--green); }
+  .tl-item.active-tl .tl-dot { background: var(--accent); animation: pulse 1.5s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0,212,255,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(0,212,255,0); }
+  }
+
+  .tl-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .tl-phase {
+    font-size: 11px;
+    background: var(--surface2);
+    color: var(--accent);
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+  }
+
+  .tl-duration {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .tl-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .tl-tasks { list-style: none; }
+  .tl-task {
+    font-size: 12px;
+    color: var(--text2);
+    padding: 3px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .tl-task::before { content: '○'; color: var(--text3); flex-shrink: 0; }
+
+  /* STATUS TAGS */
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .tag-draft { background: rgba(255,255,255,0.08); color: var(--text2); }
+  .tag-pending { background: rgba(245,166,35,0.2); color: var(--gold); }
+  .tag-approved { background: rgba(0,230,118,0.2); color: var(--green); }
+  .tag-rejected { background: rgba(255,71,87,0.2); color: var(--red); }
+  .tag-closed { background: rgba(168,85,247,0.2); color: var(--purple); }
+
+  /* EMAIL FLOW */
+  .email-flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+
+  .email-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+
+  .email-trigger {
+    font-size: 11px;
+    color: var(--gold);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .email-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .email-recipients { font-size: 12px; color: var(--text3); }
+
+  /* TECH STACK */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+
+  .tech-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+  }
+
+  .tech-layer {
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .tech-name { font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 4px; }
+  .tech-desc { font-size: 12px; color: var(--text3); }
+
+  /* PERMISSION TABLE */
+  .perm-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .perm-table th, .perm-table td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .perm-table th {
+    background: var(--surface2);
+    color: var(--text2);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .perm-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .perm-check { color: var(--green); font-size: 14px; }
+  .perm-cross { color: var(--text3); font-size: 14px; }
+  .perm-partial { color: var(--gold); font-size: 14px; }
+
+  /* HORIZONTAL RULE */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 28px 0;
+  }
+
+  h3.sub {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 24px 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  h3.sub span { color: var(--accent); }
+
+  .info-box {
+    background: rgba(0,212,255,0.07);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: var(--text2);
+    margin: 16px 0;
+  }
+
+  .info-box strong { color: var(--accent); }
+
+  .warn-box {
+    background: rgba(245,166,35,0.07);
+    border: 1px solid rgba(245,166,35,0.2);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: var(--text2);
+    margin: 16px 0;
+  }
+
+  .warn-box strong { color: var(--gold); }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .main { padding: 16px; }
+    .header-inner { padding: 12px 16px; }
+    .nav-tabs { padding: 0 16px; }
+    .flow-steps { flex-direction: column; }
+    .flow-step + .flow-step { margin-left: 0; margin-top: 8px; }
+    .flow-step + .flow-step::before { content: '↓'; left: 50%; top: -14px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="logo-area">
+      <span class="logo-badge">DOWA</span>
+      <div>
+        <h1>E-Work Permit & Contractor Control System</h1>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px;">แผนการดำเนินงาน Phase 1 — บริษัท โดวะ เทอร์โมเทค (ประเทศไทย) จำกัด</div>
+      </div>
+    </div>
+    <div class="header-meta">v1.0 · May 2026</div>
+  </div>
+  <nav class="nav-tabs">
+    <button class="tab-btn active" onclick="showTab('overview')">📋 Overview</button>
+    <button class="tab-btn" onclick="showTab('features')">⚙️ Features</button>
+    <button class="tab-btn" onclick="showTab('workflow')">🔄 Workflow</button>
+    <button class="tab-btn" onclick="showTab('database')">🗄️ Database</button>
+    <button class="tab-btn" onclick="showTab('notifications')">📧 Notifications</button>
+    <button class="tab-btn" onclick="showTab('roles')">👥 Roles</button>
+    <button class="tab-btn" onclick="showTab('tech')">🛠️ Tech Stack</button>
+    <button class="tab-btn" onclick="showTab('timeline')">📅 Timeline</button>
+  </nav>
+</header>
+
+<main class="main">
+
+  <!-- ==================== OVERVIEW ==================== -->
+  <section id="overview" class="section active">
+    <div class="overview-grid">
+      <div class="card accent">
+        <div class="card-icon">🪪</div>
+        <div class="card-title">Module หลัก</div>
+        <div class="card-value">2 Modules</div>
+        <div class="card-desc">E-Work Permit + Contractor Control</div>
+      </div>
+      <div class="card gold">
+        <div class="card-icon">⚡</div>
+        <div class="card-title">Work Permit Types</div>
+        <div class="card-value">2 ประเภท</div>
+        <div class="card-desc">Hot Work & Cold/Non-Routine Work</div>
+      </div>
+      <div class="card green">
+        <div class="card-icon">✅</div>
+        <div class="card-title">Approval Steps</div>
+        <div class="card-value">4 ขั้น</div>
+        <div class="card-desc">ผู้ขออนุญาต → เจ้าของงาน → จป. → ผจก.</div>
+      </div>
+      <div class="card purple">
+        <div class="card-icon">👷</div>
+        <div class="card-title">Contractor Features</div>
+        <div class="card-value">5 ฟีเจอร์</div>
+        <div class="card-desc">Register · CER · PDPA · ID Card · History</div>
+      </div>
+      <div class="card red">
+        <div class="card-icon">🔔</div>
+        <div class="card-title">Email Triggers</div>
+        <div class="card-value">8+ Events</div>
+        <div class="card-desc">Auto notification ทุก action สำคัญ</div>
+      </div>
+    </div>
+
+    <div class="sec-header">
+      <h2>System Overview</h2>
+      <span class="badge">PHASE 1</span>
+    </div>
+
+    <div class="info-box">
+      <strong>วัตถุประสงค์:</strong> พัฒนาระบบ Digital Safety Management สำหรับบริษัท โดวะ เทอร์โมเทค ครอบคลุมการจัดการ E-Work Permit และการควบคุมผู้รับเหมา ทดแทนกระบวนการกระดาษ เพิ่มความรวดเร็ว ลด Human Error และสร้าง Audit Trail ที่ตรวจสอบได้
+    </div>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h3>📝 Module 1: E-Work Permit</h3>
+        <ul class="feature-list">
+          <li>สร้าง Work ใหม่พร้อม Task ย่อยสำหรับการอนุมัติ</li>
+          <li>รองรับ Hot Work และ Cold/Non-Routine Work</li>
+          <li>Generate Link ส่งให้ผู้รับเหมากรอกข้อมูล</li>
+          <li>ระบบ Digital Signature ลงนามออนไลน์</li>
+          <li>Approval Flow 4 ขั้น พร้อม Email แจ้งเตือน</li>
+          <li>แนบ KYM Sheet, Daily Check Sheet</li>
+          <li>บันทึกปัญหาระหว่างปฏิบัติงาน</li>
+          <li>ปิดงาน (Job Closure) ออนไลน์</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>👷 Module 2: Contractor Control</h3>
+        <ul class="feature-list">
+          <li>ลงทะเบียนผู้รับเหมาพร้อม PDPA Consent</li>
+          <li>เก็บใบ Certificate และวันหมดอายุ</li>
+          <li>ติดตามสถานะการอบรม (Training Record)</li>
+          <li>แจ้งเตือนเมื่อบัตร/ใบเซอร์ใกล้หมดอายุ</li>
+          <li>พิมพ์บัตรประจำตัวผู้รับเหมาจากระบบ</li>
+          <li>ทะเบียนบริษัทผู้รับเหมา</li>
+          <li>ดู Timeline ประวัติการเข้า Work Permit</li>
+          <li>Export รายงานสรุป</li>
+        </ul>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <h3 class="sub"><span>▸</span> ขอบเขต Work Permit ที่รองรับ</h3>
+
+    <div class="feature-grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="feature-card">
+        <h3>🔥 Hot Work</h3>
+        <ul class="feature-list">
+          <li>เจียร/ตัด</li>
+          <li>เชื่อม/ดัด</li>
+          <li>ขุด/เจาะ</li>
+          <li>เผา</li>
+          <li>อื่นๆ ที่มีประกายไฟ/ความร้อน</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>❄️ Cold Work & Non-Routine</h3>
+        <ul class="feature-list">
+          <li>งานทั่วไปที่ไม่ใช่งานประจำ</li>
+          <li>งานติดตั้ง/รื้อถอนนั่งร้าน</li>
+          <li>งานในที่สูง (≥2 เมตร)</li>
+          <li>งานก่อสร้าง/เสาเข็ม/ปั้นจั่น</li>
+          <li>งานไฟฟ้า / งานสารเคมีอันตราย</li>
+          <li>งานยกของหนักด้วยเครื่องจักร</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== FEATURES ==================== -->
+  <section id="features" class="section">
+    <div class="sec-header">
+      <h2>Feature Design รายละเอียด</h2>
+      <span class="badge">ALL MODULES</span>
+    </div>
+
+    <h3 class="sub"><span>1</span> Work Permit Management</h3>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h3>📋 Work List & Dashboard</h3>
+        <ul class="feature-list">
+          <li>ตารางรายการ Work Permit ทั้งหมดพร้อม Filter (สถานะ, วันที่, ประเภทงาน, พื้นที่)</li>
+          <li>Badge แสดงจำนวน Permit ที่รอดำเนินการแต่ละสถานะ</li>
+          <li>ค้นหาด้วย Work ID, ชื่อบริษัท, พื้นที่</li>
+          <li>Export to Excel/PDF</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>➕ สร้าง Work Permit ใหม่</h3>
+        <ul class="feature-list">
+          <li>กรอก Header: บริษัท, พื้นที่, วันที่, จำนวนคน, ผู้คุมงาน, เจ้าของงาน</li>
+          <li>เลือกประเภทงาน (Hot/Cold/Non-Routine) และ Sub-type</li>
+          <li>เลือก PPE ที่ต้องใช้ (Checkbox รายการ)</li>
+          <li>แนบเอกสาร: ลงทะเบียน, KYM Sheet, รายชื่อ</li>
+          <li>ระบบ Auto-generate Permit ID (FR-HR-34-YYYYMMDD-XXX)</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>🔗 Contractor Link Generation</h3>
+        <ul class="feature-list">
+          <li>สร้าง Unique Token URL สำหรับผู้รับเหมากรอกข้อมูล</li>
+          <li>Link มีอายุ 48 ชั่วโมง (configurable)</li>
+          <li>ผู้รับเหมา fill form ไม่ต้องล็อกอิน</li>
+          <li>OTP SMS/Email ยืนยันตัวตนก่อนกรอก</li>
+          <li>ส่ง Link ผ่าน Email อัตโนมัติ</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>✍️ Digital Signature & Approval</h3>
+        <ul class="feature-list">
+          <li>Signature pad (draw on screen) หรือ Type + Timestamp</li>
+          <li>แสดง Audit Trail: ใครอนุมัติ เวลาเท่าไหร่</li>
+          <li>คืนกลับ (Return) พร้อมระบุเหตุผล</li>
+          <li>PDF Preview ก่อนลงนาม</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>🚧 Problem Tracking ระหว่างงาน</h3>
+        <ul class="feature-list">
+          <li>บันทึกปัญหา: วันที่, รายละเอียด, วิธีแก้ไข</li>
+          <li>ระบุผู้รับผิดชอบและวันที่เสร็จ</li>
+          <li>บันทึกผลการแก้ไขและผู้ตรวจสอบ</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>🔒 Job Closure</h3>
+        <ul class="feature-list">
+          <li>Checklist ปิดงาน: ทำความสะอาด, ตรวจสอบความปลอดภัย</li>
+          <li>ลงนาม 3 ฝ่าย: เจ้าของงาน, จป.Safety, ผจก.บุคคล</li>
+          <li>Generate PDF เอกสารสมบูรณ์</li>
+          <li>Archive ไปยัง Document Storage</li>
+        </ul>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <h3 class="sub"><span>2</span> Contractor Person Management</h3>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h3>👤 ลงทะเบียนผู้รับเหมา (Individual)</h3>
+        <ul class="feature-list">
+          <li>ข้อมูลส่วนตัว: ชื่อ-นามสกุล, เลขบัตรประชาชน, วันเกิด, สัญชาติ</li>
+          <li>ข้อมูลติดต่อ: เบอร์โทร, Email</li>
+          <li>รูปถ่าย (อัพโหลด/ถ่ายจาก Webcam)</li>
+          <li>สังกัดบริษัทผู้รับเหมา</li>
+          <li>สถานะ: Active / Inactive / Blacklist</li>
+          <li>PDPA Consent (บันทึกวันที่ยินยอม)</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>📄 Certificate Management</h3>
+        <ul class="feature-list">
+          <li>Upload ใบเซอร์ (PDF/Image) พร้อม Metadata</li>
+          <li>ประเภทใบเซอร์: Safety Training, Hot Work, Confined Space, ฯลฯ</li>
+          <li>วันออก / วันหมดอายุ</li>
+          <li>แจ้งเตือน 30/15/7 วันก่อนหมดอายุ</li>
+          <li>สถานะ: Valid / Expiring Soon / Expired</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>📝 PDPA Document</h3>
+        <ul class="feature-list">
+          <li>แบบฟอร์ม PDPA Digital (Part 1 ความยินยอม, Part 2 ข้อมูลสุขภาพ)</li>
+          <li>บันทึก IP, Timestamp, Device</li>
+          <li>Download PDF สำหรับเก็บเอกสาร</li>
+          <li>ต่ออายุความยินยอมเมื่อครบกำหนด</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>🪪 Contractor ID Card</h3>
+        <ul class="feature-list">
+          <li>Template บัตรประจำตัว (หน้า-หลัง)</li>
+          <li>QR Code เชื่อมระบบ เพื่อสแกนตรวจสอบ</li>
+          <li>แสดงวันหมดอายุบัตร และ CER ที่มี</li>
+          <li>Print-ready PDF A5 หรือ Credit Card Size</li>
+          <li>บันทึกวันที่ออกบัตรและผู้ออกบัตร</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>📚 Training History</h3>
+        <ul class="feature-list">
+          <li>รายการอบรมทั้งหมดของแต่ละคน</li>
+          <li>คะแนนผ่าน/ไม่ผ่านการทดสอบ</li>
+          <li>Link ไปยัง Work Permit ที่เคยเข้าร่วม</li>
+          <li>Export รายงานประวัติส่วนตัว</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>🏢 Contractor Company Registry</h3>
+        <ul class="feature-list">
+          <li>ทะเบียนบริษัทผู้รับเหมา: ชื่อ, เลขทะเบียน, ผู้ติดต่อ</li>
+          <li>รายชื่อพนักงานในสังกัด</li>
+          <li>สัญญาว่าจ้าง วันเริ่ม-หมดสัญญา</li>
+          <li>Blacklist บริษัท / บุคคล</li>
+        </ul>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <h3 class="sub"><span>3</span> Administration & Reports</h3>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h3>📊 Dashboard & Analytics</h3>
+        <ul class="feature-list">
+          <li>กราฟ Work Permit ตามสถานะ (Real-time)</li>
+          <li>จำนวน Permit แยกตามประเภทงาน/พื้นที่</li>
+          <li>Expiry Alert Widget (CER/บัตรผู้รับเหมา)</li>
+          <li>Permit ที่ค้างอยู่ในแต่ละขั้นอนุมัติ</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>🔐 User & Role Management</h3>
+        <ul class="feature-list">
+          <li>กำหนด Role: Admin, Safety Officer, Work Owner, Area Owner, HR Manager</li>
+          <li>Permission Matrix ต่อ Feature</li>
+          <li>SSO / Active Directory Integration (Optional)</li>
+          <li>Login Log / Activity Log</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== WORKFLOW ==================== -->
+  <section id="workflow" class="section">
+    <div class="sec-header">
+      <h2>Process Workflow</h2>
+      <span class="badge">FLOWS</span>
+    </div>
+
+    <h3 class="sub"><span>A</span> Work Permit Flow (ผู้รับเหมาใหม่ ยังไม่มีบัตร)</h3>
+
+    <div class="flow-container">
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="flow-num">1</div>
+          <div class="flow-role">เจ้าของงาน (DOWA)</div>
+          <div class="flow-action">แจ้ง จป./Safety</div>
+          <div class="flow-detail">ล่วงหน้าอย่างน้อย 1 วันทำการ ระบุประเภทงาน พื้นที่</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">2</div>
+          <div class="flow-role">จป./Safety</div>
+          <div class="flow-action">สร้าง Work + Link</div>
+          <div class="flow-detail">เปิด Work ในระบบ Generate Unique Link ส่ง Email</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">3</div>
+          <div class="flow-role">ผู้รับเหมา</div>
+          <div class="flow-action">กรอกข้อมูล WP</div>
+          <div class="flow-detail">กรอกรายละเอียด ระบุ PPE KYM รายชื่อคนงาน</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">4</div>
+          <div class="flow-role">ผู้รับเหมา</div>
+          <div class="flow-action">Submit + E-Sign</div>
+          <div class="flow-detail">ส่งเอกสารล่วงหน้า 1 วันทำการ</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">5</div>
+          <div class="flow-role">เจ้าของงาน</div>
+          <div class="flow-action">Review & Sign</div>
+          <div class="flow-detail">ตรวจสอบ อนุมัติ/คืนกลับ แจ้งเหตุผล</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">6</div>
+          <div class="flow-role">เจ้าของพื้นที่</div>
+          <div class="flow-action">Sign</div>
+          <div class="flow-detail">หน.แผนก หรือผู้ได้รับมอบหมาย</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">7</div>
+          <div class="flow-role">จป./Safety</div>
+          <div class="flow-action">ตรวจก่อนงาน</div>
+          <div class="flow-detail">ตรวจสอบ PPE, พื้นที่ ก่อนอนุมัติ</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">8</div>
+          <div class="flow-role">ผจก.บุคคล</div>
+          <div class="flow-action">อนุมัติสุดท้าย</div>
+          <div class="flow-detail">ลงนามอนุมัติปฏิบัติงานได้</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">9</div>
+          <div class="flow-role">รปภ.</div>
+          <div class="flow-action">ตรวจ & เข้างาน</div>
+          <div class="flow-detail">สแกน QR, ตรวจบัตร เปิดประตูให้เข้า</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">10</div>
+          <div class="flow-role">ผู้รับเหมา</div>
+          <div class="flow-action">ปฏิบัติงาน</div>
+          <div class="flow-detail">คืนบัตรทุกวันหลังเลิกงาน</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">11</div>
+          <div class="flow-role">ทุกฝ่าย</div>
+          <div class="flow-action">ปิดงาน</div>
+          <div class="flow-detail">ลงนาม Closure ทั้ง 3 ฝ่าย Archive PDF</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="warn-box">
+      <strong>⚠️ กรณีผู้รับเหมาใหม่ (ยังไม่มีบัตร):</strong> ต้องเข้าอบรม 1 ชั่วโมงก่อนเริ่มงาน รับบัตรผู้รับเหมาก่อนเข้าปฏิบัติงาน ระบบต้องตรวจสอบสถานะบัตรก่อนอนุมัติ WP
+    </div>
+
+    <hr class="divider">
+
+    <h3 class="sub"><span>B</span> Contractor Registration Flow</h3>
+    <div class="flow-container">
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="flow-num">1</div>
+          <div class="flow-role">ผู้รับเหมา/ตัวแทน</div>
+          <div class="flow-action">ยื่นเอกสาร</div>
+          <div class="flow-detail">กรอกข้อมูลส่วนตัว อัพรูปถ่าย</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">2</div>
+          <div class="flow-role">ผู้รับเหมา</div>
+          <div class="flow-action">กรอก PDPA</div>
+          <div class="flow-detail">ยินยอม/ไม่ยินยอม ข้อมูลสุขภาพ</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">3</div>
+          <div class="flow-role">ผู้รับเหมา</div>
+          <div class="flow-action">Upload CER</div>
+          <div class="flow-detail">อัพโหลดใบเซอร์ที่มีทั้งหมด</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">4</div>
+          <div class="flow-role">HR/Safety</div>
+          <div class="flow-action">ตรวจสอบเอกสาร</div>
+          <div class="flow-detail">Verify ความถูกต้อง</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">5</div>
+          <div class="flow-role">HR</div>
+          <div class="flow-action">อนุมัติ & ออกบัตร</div>
+          <div class="flow-detail">ออกบัตรผู้รับเหมา พิมพ์และมอบให้</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">6</div>
+          <div class="flow-role">ผู้รับเหมา</div>
+          <div class="flow-action">รับบัตรใช้งาน</div>
+          <div class="flow-detail">เริ่มใช้บัตรเข้าปฏิบัติงาน</div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <h3 class="sub"><span>C</span> Work Permit Status States</h3>
+    <div style="display:flex; gap:12px; flex-wrap:wrap; margin:16px 0;">
+      <span class="tag tag-draft">📝 Draft</span>
+      <span style="color:var(--text3)">→</span>
+      <span class="tag tag-pending">⏳ Pending (เจ้าของงาน)</span>
+      <span style="color:var(--text3)">→</span>
+      <span class="tag tag-pending">⏳ Pending (เจ้าของพื้นที่)</span>
+      <span style="color:var(--text3)">→</span>
+      <span class="tag tag-pending">⏳ Pending (จป.Safety)</span>
+      <span style="color:var(--text3)">→</span>
+      <span class="tag tag-pending">⏳ Pending (ผจก.)</span>
+      <span style="color:var(--text3)">→</span>
+      <span class="tag tag-approved">✅ Approved (In Progress)</span>
+      <span style="color:var(--text3)">→</span>
+      <span class="tag tag-closed">🔒 Closed</span>
+    </div>
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <span class="tag tag-rejected">❌ Rejected</span>
+      <span style="color:var(--text3)">หรือ</span>
+      <span class="tag tag-pending">🔁 Returned (แก้ไขแล้วส่งใหม่)</span>
+    </div>
+  </section>
+
+  <!-- ==================== DATABASE ==================== -->
+  <section id="database" class="section">
+    <div class="sec-header">
+      <h2>Database Design</h2>
+      <span class="badge">ERD</span>
+    </div>
+
+    <div class="info-box">
+      <strong>Relational Database</strong> (PostgreSQL / MySQL) — ใช้ UUID เป็น Primary Key ทุกตาราง, Soft Delete ด้วย deleted_at, มี created_at / updated_at ทุกตาราง
+    </div>
+
+    <div class="db-grid">
+
+      <div class="db-table">
+        <div class="db-table-header">
+          <span class="db-pk">PK</span>
+          <h4>work_permits</h4>
+        </div>
+        <ul class="db-fields">
+          <li class="db-field"><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-desc">Primary Key</span></li>
+          <li class="db-field"><span class="field-name">permit_code</span><span class="field-type">VARCHAR</span><span class="field-desc">รหัส FR-HR-34-YYYYMMDD-XXX</span></li>
+          <li class="db-field"><span class="field-name">contractor_company_id</span><span class="field-type">UUID FK</span><span class="field-desc">→ contractor_companies</span></li>
+          <li class="db-field"><span class="field-name">work_area</span><span class="field-type">VARCHAR</span><span class="field-desc">พื้นที่/สถานที่ปฏิบัติงาน</span></li>
+          <li class="db-field"><span class="field-name">work_description</span><span class="field-type">TEXT</span><span class="field-desc">ลักษณะงาน/รายละเอียด</span></li>
+          <li class="db-field"><span class="field-name">work_type</span><span class="field-type">ENUM</span><span class="field-desc">HOT_WORK / COLD_WORK</span></li>
+          <li class="db-field"><span class="field-name">hot_work_types</span><span class="field-type">JSON</span><span class="field-desc">['grinding','welding',...]</span></li>
+          <li class="db-field"><span class="field-name">cold_work_types</span><span class="field-type">JSON</span><span class="field-desc">['scaffold','height','electrical',...]</span></li>
+          <li class="db-field"><span class="field-name">ppe_required</span><span class="field-type">JSON</span><span class="field-desc">รายการ PPE ที่ต้องใช้</span></li>
+          <li class="db-field"><span class="field-name">start_date</span><span class="field-type">DATE</span><span class="field-desc">วันเริ่มงาน</span></li>
+          <li class="db-field"><span class="field-name">end_date</span><span class="field-type">DATE</span><span class="field-desc">วันที่แล้วเสร็จ</span></li>
+          <li class="db-field"><span class="field-name">start_time</span><span class="field-type">TIME</span><span class="field-desc">ตั้งแต่เวลา</span></li>
+          <li class="db-field"><span class="field-name">end_time</span><span class="field-type">TIME</span><span class="field-desc">ถึงเวลา</span></li>
+          <li class="db-field"><span class="field-name">supervisor_name</span><span class="field-type">VARCHAR</span><span class="field-desc">ชื่อผู้คุมงาน</span></li>
+          <li class="db-field"><span class="field-name">supervisor_phone</span><span class="field-type">VARCHAR</span><span class="field-desc">เบอร์โทรผู้คุมงาน</span></li>
+          <li class="db-field"><span class="field-name">dowa_owner_name</span><span class="field-type">VARCHAR</span><span class="field-desc">พนักงานโดวะเจ้าของงาน</span></li>
+          <li class="db-field"><span class="field-name">dowa_owner_phone</span><span class="field-type">VARCHAR</span><span class="field-desc">เบอร์โทรเจ้าของงาน</span></li>
+          <li class="db-field"><span class="field-name">status</span><span class="field-type">ENUM</span><span class="field-desc">DRAFT/PENDING_*/APPROVED/CLOSED/REJECTED</span></li>
+          <li class="db-field"><span class="field-name">contractor_link_token</span><span class="field-type">VARCHAR</span><span class="field-desc">Unique token สำหรับ link</span></li>
+          <li class="db-field"><span class="field-name">token_expires_at</span><span class="field-type">TIMESTAMP</span><span class="field-desc">วันหมดอายุ link</span></li>
+          <li class="db-field"><span class="field-name">created_by</span><span class="field-type">UUID FK</span><span class="field-desc">→ users</span></li>
+        </ul>
+      </div>
+
+      <div class="db-table">
+        <div class="db-table-header">
+          <span class="db-pk">PK</span>
+          <h4>permit_approvals</h4>
+        </div>
+        <ul class="db-fields">
+          <li class="db-field"><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-desc">Primary Key</span></li>
+          <li class="db-field"><span class="field-name">permit_id</span><span class="field-type">UUID FK</span><span class="field-desc">→ work_permits</span></li>
+          <li class="db-field"><span class="field-name">step</span><span class="field-type">INT</span><span class="field-desc">ลำดับขั้นอนุมัติ (1-4)</span></li>
+          <li class="db-field"><span class="field-name">role</span><span class="field-type">ENUM</span><span class="field-desc">WORK_OWNER/AREA_OWNER/SAFETY/HR_MGR</span></li>
+          <li class="db-field"><span class="field-name">approver_id</span><span class="field-type">UUID FK</span><span class="field-desc">→ users</span></li>
+          <li class="db-field"><span class="field-name">approver_name</span><span class="field-type">VARCHAR</span><span class="field-desc">ชื่อผู้อนุมัติ</span></li>
+          <li class="db-field"><span class="field-name">status</span><span class="field-type">ENUM</span><span class="field-desc">PENDING/APPROVED/RETURNED/REJECTED</span></li>
+          <li class="db-field"><span class="field-name">signature_data</span><span class="field-type">TEXT</span><span class="field-desc">Base64 Signature Image</span></li>
+          <li class="db-field"><span class="field-name">comment</span><span class="field-type">TEXT</span><span class="field-desc">หมายเหตุ/เหตุผลคืน</span></li>
+          <li class="db-field"><span class="field-name">acted_at</span><span class="field-type">TIMESTAMP</span><span class="field-desc">เวลาที่ดำเนินการ</span></li>
+          <li class="db-field"><span class="field-name">ip_address</span><span class="field-type">VARCHAR</span><span class="field-desc">IP ของผู้ลงนาม</span></li>
+        </ul>
+      </div>
+
+      <div class="db-table">
+        <div class="db-table-header">
+          <span class="db-pk">PK</span>
+          <h4>contractors</h4>
+        </div>
+        <ul class="db-fields">
+          <li class="db-field"><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-desc">Primary Key</span></li>
+          <li class="db-field"><span class="field-name">company_id</span><span class="field-type">UUID FK</span><span class="field-desc">→ contractor_companies</span></li>
+          <li class="db-field"><span class="field-name">first_name</span><span class="field-type">VARCHAR</span><span class="field-desc">ชื่อ</span></li>
+          <li class="db-field"><span class="field-name">last_name</span><span class="field-type">VARCHAR</span><span class="field-desc">นามสกุล</span></li>
+          <li class="db-field"><span class="field-name">national_id</span><span class="field-type">VARCHAR</span><span class="field-desc">เลขบัตรประชาชน (Encrypted)</span></li>
+          <li class="db-field"><span class="field-name">birth_date</span><span class="field-type">DATE</span><span class="field-desc">วันเกิด</span></li>
+          <li class="db-field"><span class="field-name">nationality</span><span class="field-type">VARCHAR</span><span class="field-desc">สัญชาติ</span></li>
+          <li class="db-field"><span class="field-name">phone</span><span class="field-type">VARCHAR</span><span class="field-desc">เบอร์โทรศัพท์</span></li>
+          <li class="db-field"><span class="field-name">email</span><span class="field-type">VARCHAR</span><span class="field-desc">อีเมล</span></li>
+          <li class="db-field"><span class="field-name">photo_url</span><span class="field-type">VARCHAR</span><span class="field-desc">URL รูปถ่าย</span></li>
+          <li class="db-field"><span class="field-name">card_number</span><span class="field-type">VARCHAR</span><span class="field-desc">เลขบัตรผู้รับเหมา</span></li>
+          <li class="db-field"><span class="field-name">card_issue_date</span><span class="field-type">DATE</span><span class="field-desc">วันออกบัตร</span></li>
+          <li class="db-field"><span class="field-name">card_expiry_date</span><span class="field-type">DATE</span><span class="field-desc">วันหมดอายุบัตร</span></li>
+          <li class="db-field"><span class="field-name">status</span><span class="field-type">ENUM</span><span class="field-desc">ACTIVE/INACTIVE/BLACKLIST</span></li>
+          <li class="db-field"><span class="field-name">pdpa_consent_at</span><span class="field-type">TIMESTAMP</span><span class="field-desc">วันที่ยินยอม PDPA</span></li>
+          <li class="db-field"><span class="field-name">pdpa_data</span><span class="field-type">JSON</span><span class="field-desc">ข้อมูลสุขภาพ PDPA (Encrypted)</span></li>
+        </ul>
+      </div>
+
+      <div class="db-table">
+        <div class="db-table-header">
+          <span class="db-pk">PK</span>
+          <h4>contractor_certificates</h4>
+        </div>
+        <ul class="db-fields">
+          <li class="db-field"><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-desc">Primary Key</span></li>
+          <li class="db-field"><span class="field-name">contractor_id</span><span class="field-type">UUID FK</span><span class="field-desc">→ contractors</span></li>
+          <li class="db-field"><span class="field-name">cert_type</span><span class="field-type">VARCHAR</span><span class="field-desc">ประเภทใบเซอร์</span></li>
+          <li class="db-field"><span class="field-name">cert_name</span><span class="field-type">VARCHAR</span><span class="field-desc">ชื่อใบเซอร์</span></li>
+          <li class="db-field"><span class="field-name">issued_date</span><span class="field-type">DATE</span><span class="field-desc">วันออกใบเซอร์</span></li>
+          <li class="db-field"><span class="field-name">expiry_date</span><span class="field-type">DATE</span><span class="field-desc">วันหมดอายุ</span></li>
+          <li class="db-field"><span class="field-name">issued_by</span><span class="field-type">VARCHAR</span><span class="field-desc">หน่วยงานออกใบเซอร์</span></li>
+          <li class="db-field"><span class="field-name">file_url</span><span class="field-type">VARCHAR</span><span class="field-desc">URL ไฟล์ใบเซอร์</span></li>
+          <li class="db-field"><span class="field-name">status</span><span class="field-type">ENUM</span><span class="field-desc">VALID/EXPIRING/EXPIRED</span></li>
+          <li class="db-field"><span class="field-name">verified_by</span><span class="field-type">UUID FK</span><span class="field-desc">→ users (ผู้ตรวจสอบ)</span></li>
+          <li class="db-field"><span class="field-name">verified_at</span><span class="field-type">TIMESTAMP</span><span class="field-desc">วันที่ตรวจสอบ</span></li>
+        </ul>
+      </div>
+
+      <div class="db-table">
+        <div class="db-table-header">
+          <span class="db-pk">PK</span>
+          <h4>contractor_companies</h4>
+        </div>
+        <ul class="db-fields">
+          <li class="db-field"><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-desc">Primary Key</span></li>
+          <li class="db-field"><span class="field-name">company_name</span><span class="field-type">VARCHAR</span><span class="field-desc">ชื่อบริษัท</span></li>
+          <li class="db-field"><span class="field-name">tax_id</span><span class="field-type">VARCHAR</span><span class="field-desc">เลขทะเบียนนิติบุคคล</span></li>
+          <li class="db-field"><span class="field-name">contact_name</span><span class="field-type">VARCHAR</span><span class="field-desc">ชื่อผู้ติดต่อ</span></li>
+          <li class="db-field"><span class="field-name">contact_phone</span><span class="field-type">VARCHAR</span><span class="field-desc">เบอร์โทร</span></li>
+          <li class="db-field"><span class="field-name">contact_email</span><span class="field-type">VARCHAR</span><span class="field-desc">Email</span></li>
+          <li class="db-field"><span class="field-name">contract_start</span><span class="field-type">DATE</span><span class="field-desc">วันเริ่มสัญญา</span></li>
+          <li class="db-field"><span class="field-name">contract_end</span><span class="field-type">DATE</span><span class="field-desc">วันหมดสัญญา</span></li>
+          <li class="db-field"><span class="field-name">status</span><span class="field-type">ENUM</span><span class="field-desc">ACTIVE/INACTIVE/BLACKLIST</span></li>
+        </ul>
+      </div>
+
+      <div class="db-table">
+        <div class="db-table-header">
+          <span class="db-pk">PK</span>
+          <h4>permit_workers</h4>
+        </div>
+        <ul class="db-fields">
+          <li class="db-field"><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-desc">Primary Key</span></li>
+          <li class="db-field"><span class="field-name">permit_id</span><span class="field-type">UUID FK</span><span class="field-desc">→ work_permits</span></li>
+          <li class="db-field"><span class="field-name">contractor_id</span><span class="field-type">UUID FK</span><span class="field-desc">→ contractors</span></li>
+          <li class="db-field"><span class="field-name">is_supervisor</span><span class="field-type">BOOL</span><span class="field-desc">เป็นหัวหน้างานหรือไม่</span></li>
+          <li class="db-field"><span class="field-name">date</span><span class="field-type">DATE</span><span class="field-desc">วันที่เข้าปฏิบัติงาน</span></li>
+          <li class="db-field"><span class="field-name">check_in</span><span class="field-type">TIME</span><span class="field-desc">เวลาเข้า</span></li>
+          <li class="db-field"><span class="field-name">check_out</span><span class="field-type">TIME</span><span class="field-desc">เวลาออก</span></li>
+        </ul>
+      </div>
+
+      <div class="db-table">
+        <div class="db-table-header">
+          <span class="db-pk">PK</span>
+          <h4>permit_issues</h4>
+        </div>
+        <ul class="db-fields">
+          <li class="db-field"><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-desc">Primary Key</span></li>
+          <li class="db-field"><span class="field-name">permit_id</span><span class="field-type">UUID FK</span><span class="field-desc">→ work_permits</span></li>
+          <li class="db-field"><span class="field-name">issue_date</span><span class="field-type">DATE</span><span class="field-desc">วันที่พบปัญหา</span></li>
+          <li class="db-field"><span class="field-name">problem</span><span class="field-type">TEXT</span><span class="field-desc">รายละเอียดปัญหา</span></li>
+          <li class="db-field"><span class="field-name">solution</span><span class="field-type">TEXT</span><span class="field-desc">วิธีการแก้ไข</span></li>
+          <li class="db-field"><span class="field-name">resolved_date</span><span class="field-type">DATE</span><span class="field-desc">วันที่แล้วเสร็จ</span></li>
+          <li class="db-field"><span class="field-name">responsible_by</span><span class="field-type">VARCHAR</span><span class="field-desc">ผู้รับผิดชอบ</span></li>
+          <li class="db-field"><span class="field-name">result</span><span class="field-type">TEXT</span><span class="field-desc">ผลการแก้ไข</span></li>
+          <li class="db-field"><span class="field-name">inspector</span><span class="field-type">VARCHAR</span><span class="field-desc">ผู้ตรวจสอบ</span></li>
+        </ul>
+      </div>
+
+      <div class="db-table">
+        <div class="db-table-header">
+          <span class="db-pk">PK</span>
+          <h4>training_records</h4>
+        </div>
+        <ul class="db-fields">
+          <li class="db-field"><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-desc">Primary Key</span></li>
+          <li class="db-field"><span class="field-name">contractor_id</span><span class="field-type">UUID FK</span><span class="field-desc">→ contractors</span></li>
+          <li class="db-field"><span class="field-name">training_name</span><span class="field-type">VARCHAR</span><span class="field-desc">ชื่อหลักสูตรอบรม</span></li>
+          <li class="db-field"><span class="field-name">training_date</span><span class="field-type">DATE</span><span class="field-desc">วันที่อบรม</span></li>
+          <li class="db-field"><span class="field-name">score</span><span class="field-type">INT</span><span class="field-desc">คะแนนสอบ</span></li>
+          <li class="db-field"><span class="field-name">pass_score</span><span class="field-type">INT</span><span class="field-desc">เกณฑ์ผ่าน</span></li>
+          <li class="db-field"><span class="field-name">passed</span><span class="field-type">BOOL</span><span class="field-desc">ผ่าน/ไม่ผ่าน</span></li>
+          <li class="db-field"><span class="field-name">trainer</span><span class="field-type">VARCHAR</span><span class="field-desc">ผู้สอน/หน่วยงาน</span></li>
+          <li class="db-field"><span class="field-name">cert_url</span><span class="field-type">VARCHAR</span><span class="field-desc">URL วุฒิบัตร</span></li>
+        </ul>
+      </div>
+
+      <div class="db-table">
+        <div class="db-table-header">
+          <span class="db-pk">PK</span>
+          <h4>users</h4>
+        </div>
+        <ul class="db-fields">
+          <li class="db-field"><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-desc">Primary Key</span></li>
+          <li class="db-field"><span class="field-name">employee_id</span><span class="field-type">VARCHAR</span><span class="field-desc">รหัสพนักงาน</span></li>
+          <li class="db-field"><span class="field-name">full_name</span><span class="field-type">VARCHAR</span><span class="field-desc">ชื่อ-นามสกุล</span></li>
+          <li class="db-field"><span class="field-name">email</span><span class="field-type">VARCHAR</span><span class="field-desc">Email บริษัท</span></li>
+          <li class="db-field"><span class="field-name">role</span><span class="field-type">ENUM</span><span class="field-desc">ADMIN/SAFETY/WORK_OWNER/AREA_OWNER/HR_MGR</span></li>
+          <li class="db-field"><span class="field-name">department</span><span class="field-type">VARCHAR</span><span class="field-desc">ฝ่าย/แผนก</span></li>
+          <li class="db-field"><span class="field-name">phone</span><span class="field-type">VARCHAR</span><span class="field-desc">เบอร์โทร</span></li>
+          <li class="db-field"><span class="field-name">is_active</span><span class="field-type">BOOL</span><span class="field-desc">สถานะใช้งาน</span></li>
+          <li class="db-field"><span class="field-name">last_login_at</span><span class="field-type">TIMESTAMP</span><span class="field-desc">เข้าใช้งานล่าสุด</span></li>
+        </ul>
+      </div>
+
+      <div class="db-table">
+        <div class="db-table-header">
+          <span class="db-pk">PK</span>
+          <h4>notifications</h4>
+        </div>
+        <ul class="db-fields">
+          <li class="db-field"><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-desc">Primary Key</span></li>
+          <li class="db-field"><span class="field-name">type</span><span class="field-type">ENUM</span><span class="field-desc">EMAIL/SYSTEM</span></li>
+          <li class="db-field"><span class="field-name">event</span><span class="field-type">VARCHAR</span><span class="field-desc">ประเภท Event ที่ trigger</span></li>
+          <li class="db-field"><span class="field-name">recipient_email</span><span class="field-type">VARCHAR</span><span class="field-desc">ผู้รับ</span></li>
+          <li class="db-field"><span class="field-name">subject</span><span class="field-type">VARCHAR</span><span class="field-desc">หัวข้อ</span></li>
+          <li class="db-field"><span class="field-name">body</span><span class="field-type">TEXT</span><span class="field-desc">เนื้อหา Email</span></li>
+          <li class="db-field"><span class="field-name">ref_type</span><span class="field-type">VARCHAR</span><span class="field-desc">work_permit / contractor</span></li>
+          <li class="db-field"><span class="field-name">ref_id</span><span class="field-type">UUID</span><span class="field-desc">ID ของ record ที่เกี่ยวข้อง</span></li>
+          <li class="db-field"><span class="field-name">sent_at</span><span class="field-type">TIMESTAMP</span><span class="field-desc">เวลาที่ส่ง</span></li>
+          <li class="db-field"><span class="field-name">status</span><span class="field-type">ENUM</span><span class="field-desc">PENDING/SENT/FAILED</span></li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==================== NOTIFICATIONS ==================== -->
+  <section id="notifications" class="section">
+    <div class="sec-header">
+      <h2>Email Notification System</h2>
+      <span class="badge">AUTO</span>
+    </div>
+
+    <div class="info-box">
+      <strong>Email Engine:</strong> ระบบส่ง Email อัตโนมัติผ่าน SMTP (หรือ SendGrid/AWS SES) โดย Template เป็นภาษาไทย มี Link Deep-link กลับไปยัง Work Permit นั้นๆ และบันทึกสถานะการส่งไว้ใน notifications table
+    </div>
+
+    <h3 class="sub"><span>▸</span> Work Permit Events</h3>
+    <div class="email-flow">
+      <div class="email-card">
+        <div class="email-trigger">TRIGGER: WP Created</div>
+        <div class="email-title">📋 แจ้งสร้าง Work Permit ใหม่</div>
+        <div class="email-recipients">ถึง: ผู้รับเหมา (Contractor Link), จป.Safety, เจ้าของงาน</div>
+      </div>
+      <div class="email-card">
+        <div class="email-trigger">TRIGGER: WP Submitted</div>
+        <div class="email-title">📨 ผู้รับเหมาส่งเอกสารแล้ว</div>
+        <div class="email-recipients">ถึง: เจ้าของงาน (พร้อม Link อนุมัติ)</div>
+      </div>
+      <div class="email-card">
+        <div class="email-trigger">TRIGGER: Step 1 Approved</div>
+        <div class="email-title">✅ เจ้าของงานอนุมัติแล้ว</div>
+        <div class="email-recipients">ถึง: เจ้าของพื้นที่ (พร้อม Link อนุมัติ)</div>
+      </div>
+      <div class="email-card">
+        <div class="email-trigger">TRIGGER: Step 2 Approved</div>
+        <div class="email-title">✅ เจ้าของพื้นที่อนุมัติแล้ว</div>
+        <div class="email-recipients">ถึง: จป./Safety Officer</div>
+      </div>
+      <div class="email-card">
+        <div class="email-trigger">TRIGGER: Step 3 Approved</div>
+        <div class="email-title">✅ จป.Safety อนุมัติแล้ว</div>
+        <div class="email-recipients">ถึง: ผจก.บุคคลและบริหาร</div>
+      </div>
+      <div class="email-card">
+        <div class="email-trigger">TRIGGER: FINAL Approved</div>
+        <div class="email-title">🎉 Work Permit อนุมัติครบแล้ว</div>
+        <div class="email-recipients">ถึง: ผู้รับเหมา, เจ้าของงาน, จป.Safety, รปภ.</div>
+      </div>
+      <div class="email-card">
+        <div class="email-trigger">TRIGGER: WP Returned</div>
+        <div class="email-title">🔁 ส่งกลับแก้ไข</div>
+        <div class="email-recipients">ถึง: ผู้รับเหมา (พร้อมเหตุผลและ Link แก้ไข)</div>
+      </div>
+      <div class="email-card">
+        <div class="email-trigger">TRIGGER: WP Closed</div>
+        <div class="email-title">🔒 ปิดงานแล้ว</div>
+        <div class="email-recipients">ถึง: ทุกฝ่าย พร้อม PDF Summary</div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <h3 class="sub"><span>▸</span> Contractor & Certificate Events</h3>
+    <div class="email-flow">
+      <div class="email-card">
+        <div class="email-trigger">TRIGGER: 30 วันก่อนหมดอายุ</div>
+        <div class="email-title">⚠️ ใบเซอร์ใกล้หมดอายุ (30 วัน)</div>
+        <div class="email-recipients">ถึง: HR, Safety Officer, ผู้รับเหมา</div>
+      </div>
+      <div class="email-card">
+        <div class="email-trigger">TRIGGER: 15 วันก่อนหมดอายุ</div>
+        <div class="email-title">🔴 ใบเซอร์ใกล้หมดอายุ (15 วัน)</div>
+        <div class="email-recipients">ถึง: HR, Safety Officer, ผู้รับเหมา</div>
+      </div>
+      <div class="email-card">
+        <div class="email-trigger">TRIGGER: 30 วันก่อนบัตรหมดอายุ</div>
+        <div class="email-title">⚠️ บัตรผู้รับเหมาใกล้หมดอายุ</div>
+        <div class="email-recipients">ถึง: HR, ผู้รับเหมา, เจ้าของงาน</div>
+      </div>
+      <div class="email-card">
+        <div class="email-trigger">TRIGGER: Registration Complete</div>
+        <div class="email-title">👋 ลงทะเบียนสำเร็จ</div>
+        <div class="email-recipients">ถึง: ผู้รับเหมา (ยืนยันข้อมูล + ขั้นตอนถัดไป)</div>
+      </div>
+    </div>
+
+    <hr class="divider">
+    <h3 class="sub"><span>▸</span> Scheduled Jobs (Cron)</h3>
+    <div class="feature-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px,1fr));">
+      <div class="feature-card">
+        <h3>⏰ Daily 08:00 — Expiry Check</h3>
+        <ul class="feature-list">
+          <li>ตรวจ Certificate ที่ expiry_date = วันนี้ + 30/15/7 วัน</li>
+          <li>ตรวจบัตรผู้รับเหมา card_expiry_date</li>
+          <li>Queue Email notification</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>⏰ Daily 07:00 — Permit Reminder</h3>
+        <ul class="feature-list">
+          <li>Permit ที่ยัง Pending เกิน 24 ชั่วโมง</li>
+          <li>ส่ง Reminder ถึง Approver ถัดไป</li>
+          <li>Escalate ถ้า Pending เกิน 48 ชั่วโมง</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>⏰ Weekly Monday — Summary Report</h3>
+        <ul class="feature-list">
+          <li>สรุป Permit ของสัปดาห์ที่ผ่านมา</li>
+          <li>จำนวน Open/Closed/Pending</li>
+          <li>ส่งให้ Safety Officer และผู้บริหาร</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== ROLES ==================== -->
+  <section id="roles" class="section">
+    <div class="sec-header">
+      <h2>Role & Permission Matrix</h2>
+      <span class="badge">ACCESS CONTROL</span>
+    </div>
+
+    <div class="feature-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom:24px;">
+      <div class="feature-card">
+        <h3>🔧 Admin</h3>
+        <ul class="feature-list">
+          <li>จัดการ User และ Role</li>
+          <li>Config Approval Flow</li>
+          <li>ตั้งค่าระบบทั้งหมด</li>
+          <li>ดูรายงานทุกอย่าง</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>🦺 Safety Officer (จป.)</h3>
+        <ul class="feature-list">
+          <li>สร้าง/ดู Work Permit ทั้งหมด</li>
+          <li>อนุมัติ Step 3</li>
+          <li>Generate Contractor Link</li>
+          <li>จัดการ Contractor ทั้งหมด</li>
+          <li>ดู Dashboard + Export</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>👔 Work Owner (เจ้าของงาน)</h3>
+        <ul class="feature-list">
+          <li>สร้าง Work Permit ของตนเอง</li>
+          <li>อนุมัติ Step 1</li>
+          <li>ดู Permit ของตนเอง</li>
+          <li>บันทึกปัญหาระหว่างงาน</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>🏭 Area Owner (เจ้าของพื้นที่)</h3>
+        <ul class="feature-list">
+          <li>อนุมัติ Step 2</li>
+          <li>ดู Permit ในพื้นที่รับผิดชอบ</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>👩‍💼 HR Manager (ผจก.บุคคล)</h3>
+        <ul class="feature-list">
+          <li>อนุมัติ Step 4 (Final)</li>
+          <li>ออกบัตรผู้รับเหมา</li>
+          <li>จัดการทะเบียนผู้รับเหมา</li>
+          <li>ดู PDPA Records</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>🔐 Guard (รปภ.)</h3>
+        <ul class="feature-list">
+          <li>สแกน QR บัตรผู้รับเหมา</li>
+          <li>ดูสถานะ Permit ปัจจุบัน</li>
+          <li>Check-in / Check-out</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 class="sub"><span>▸</span> Permission Table</h3>
+    <div style="overflow-x:auto;">
+      <table class="perm-table">
+        <thead>
+          <tr>
+            <th>Feature / Action</th>
+            <th>Admin</th>
+            <th>Safety</th>
+            <th>Work Owner</th>
+            <th>Area Owner</th>
+            <th>HR Mgr</th>
+            <th>Guard</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>สร้าง Work Permit</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-cross">—</td></tr>
+          <tr><td>ดู Work Permit ทั้งหมด</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-partial">เฉพาะของตน</td><td class="perm-partial">เฉพาะพื้นที่</td><td class="perm-check">✓</td><td class="perm-cross">—</td></tr>
+          <tr><td>Gen Contractor Link</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-cross">—</td></tr>
+          <tr><td>อนุมัติ Step 1 (Work Owner)</td><td class="perm-check">✓</td><td class="perm-cross">—</td><td class="perm-check">✓</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-cross">—</td></tr>
+          <tr><td>อนุมัติ Step 2 (Area Owner)</td><td class="perm-check">✓</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-check">✓</td><td class="perm-cross">—</td><td class="perm-cross">—</td></tr>
+          <tr><td>อนุมัติ Step 3 (Safety)</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-cross">—</td></tr>
+          <tr><td>อนุมัติ Step 4 (HR Mgr)</td><td class="perm-check">✓</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-check">✓</td><td class="perm-cross">—</td></tr>
+          <tr><td>ปิดงาน (Closure)</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-cross">—</td><td class="perm-check">✓</td><td class="perm-cross">—</td></tr>
+          <tr><td>ลงทะเบียน Contractor</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-check">✓</td><td class="perm-cross">—</td></tr>
+          <tr><td>ดู PDPA Data</td><td class="perm-check">✓</td><td class="perm-partial">Limited</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-check">✓</td><td class="perm-cross">—</td></tr>
+          <tr><td>ออกบัตร Contractor</td><td class="perm-check">✓</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-check">✓</td><td class="perm-cross">—</td></tr>
+          <tr><td>สแกน QR บัตร</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-check">✓</td></tr>
+          <tr><td>ดู Dashboard</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-partial">Limited</td><td class="perm-cross">—</td><td class="perm-check">✓</td><td class="perm-cross">—</td></tr>
+          <tr><td>Export Report</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-check">✓</td><td class="perm-cross">—</td></tr>
+          <tr><td>User Management</td><td class="perm-check">✓</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-cross">—</td></tr>
+          <tr><td>Config Approval Flow</td><td class="perm-check">✓</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-cross">—</td><td class="perm-cross">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================== TECH STACK ==================== -->
+  <section id="tech" class="section">
+    <div class="sec-header">
+      <h2>Technology Stack</h2>
+      <span class="badge">ARCHITECTURE</span>
+    </div>
+
+    <div class="tech-grid">
+      <div class="tech-item">
+        <div class="tech-layer">Frontend</div>
+        <div class="tech-name">React + TypeScript</div>
+        <div class="tech-desc">SPA, Component-based, Type-safe</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-layer">UI Library</div>
+        <div class="tech-name">Ant Design / Shadcn</div>
+        <div class="tech-desc">Tables, Forms, Modals, Date Pickers</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-layer">State Management</div>
+        <div class="tech-name">Zustand / TanStack Query</div>
+        <div class="tech-desc">Global state + Server state caching</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-layer">Backend</div>
+        <div class="tech-name">Node.js + Express / NestJS</div>
+        <div class="tech-desc">REST API หรือ GraphQL</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-layer">Database</div>
+        <div class="tech-name">PostgreSQL</div>
+        <div class="tech-desc">Relational DB, Strong consistency, JSON support</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-layer">ORM</div>
+        <div class="tech-name">Prisma / TypeORM</div>
+        <div class="tech-desc">Schema migration, Type-safe queries</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-layer">File Storage</div>
+        <div class="tech-name">MinIO / S3-compatible</div>
+        <div class="tech-desc">เก็บ PDF, รูปถ่าย, ใบเซอร์</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-layer">Email</div>
+        <div class="tech-name">Nodemailer + SMTP</div>
+        <div class="tech-desc">หรือ SendGrid สำหรับ Production</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-layer">PDF Generation</div>
+        <div class="tech-name">Puppeteer / PDFKit</div>
+        <div class="tech-desc">Generate PDF Work Permit + บัตร</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-layer">Authentication</div>
+        <div class="tech-name">JWT + Refresh Token</div>
+        <div class="tech-desc">Stateless auth, Role-based</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-layer">Job Scheduler</div>
+        <div class="tech-name">node-cron / Bull MQ</div>
+        <div class="tech-desc">Cron jobs สำหรับ Expiry check + Email queue</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-layer">QR Code</div>
+        <div class="tech-name">qrcode.js</div>
+        <div class="tech-desc">Generate QR สำหรับบัตรผู้รับเหมา</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-layer">Deployment</div>
+        <div class="tech-name">Docker + Docker Compose</div>
+        <div class="tech-desc">On-premise หรือ Cloud-ready</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-layer">Reverse Proxy</div>
+        <div class="tech-name">Nginx</div>
+        <div class="tech-desc">SSL termination, Load balancing</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-layer">Signature</div>
+        <div class="tech-name">signature_pad.js</div>
+        <div class="tech-desc">Canvas-based digital signature</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-layer">Encryption</div>
+        <div class="tech-name">AES-256 (Node crypto)</div>
+        <div class="tech-desc">เข้ารหัสข้อมูล PDPA + เลขบัตรประชาชน</div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <h3 class="sub"><span>▸</span> Architecture Diagram (Simplified)</h3>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2);line-height:2;overflow-x:auto;">
+      <pre style="margin:0;">
+┌──────────────────────────────────────────────────────────────┐
+│                        CLIENT LAYER                           │
+│  ┌──────────────┐  ┌──────────────┐  ┌────────────────────┐  │
+│  │  Web App     │  │  Mobile      │  │  Contractor Form    │  │
+│  │  (React)     │  │  (Resp.)     │  │  (Public Link)      │  │
+│  └──────┬───────┘  └──────┬───────┘  └─────────┬──────────┘  │
+└─────────┼─────────────────┼──────────────────── ┼────────────┘
+          │                 │                      │
+          ▼                 ▼                      ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   NGINX (Reverse Proxy + SSL)                │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+┌──────────────────────────▼──────────────────────────────────┐
+│                    API SERVER (NestJS)                       │
+│  ┌──────────────┐  ┌──────────────┐  ┌────────────────────┐ │
+│  │  Auth Module │  │  WP Module   │  │  Contractor Module  │ │
+│  ├──────────────┤  ├──────────────┤  ├────────────────────┤ │
+│  │  JWT Guard   │  │  Approval    │  │  CER / PDPA        │ │
+│  │  Role Guard  │  │  Flow Logic  │  │  ID Card Gen       │ │
+│  └──────────────┘  └──────────────┘  └────────────────────┘ │
+│  ┌──────────────┐  ┌──────────────┐                         │
+│  │  Email Queue │  │  PDF Engine  │                         │
+│  │  (Bull MQ)   │  │  (Puppeteer) │                         │
+│  └──────────────┘  └──────────────┘                         │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+          ┌────────────────┼────────────────┐
+          ▼                ▼                ▼
+  ┌───────────────┐ ┌──────────────┐ ┌────────────────┐
+  │  PostgreSQL   │ │  Redis       │ │  MinIO (Files) │
+  │  (Main DB)    │ │  (Cache/BQ)  │ │  CER, Photos   │
+  └───────────────┘ └──────────────┘ └────────────────┘
+      </pre>
+    </div>
+  </section>
+
+  <!-- ==================== TIMELINE ==================== -->
+  <section id="timeline" class="section">
+    <div class="sec-header">
+      <h2>Project Timeline & Roadmap</h2>
+      <span class="badge">PHASE 1</span>
+    </div>
+
+    <div class="info-box">
+      <strong>ประมาณการ Phase 1:</strong> ~16-20 สัปดาห์ (4-5 เดือน) โดยทีม Full-stack 2-3 คน + Designer 1 คน + BA/PM 1 คน
+    </div>
+
+    <div class="timeline">
+      <div class="tl-item active-tl">
+        <div class="tl-dot"></div>
+        <div class="tl-header">
+          <span class="tl-phase">Phase 0</span>
+          <span class="tl-duration">2 สัปดาห์</span>
+        </div>
+        <div class="tl-title">Discovery & System Design</div>
+        <ul class="tl-tasks">
+          <li class="tl-task">Workshop กับ Safety Officer และ HR เพื่อ Confirm requirements</li>
+          <li class="tl-task">ออกแบบ Database Schema (ERD)</li>
+          <li class="tl-task">ออกแบบ UI/UX Wireframe ทุกหน้า</li>
+          <li class="tl-task">ตั้งค่า Dev Environment (Git, Docker, CI/CD)</li>
+          <li class="tl-task">Confirm Approval Flow กับ Stakeholders</li>
+        </ul>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-header">
+          <span class="tl-phase">Phase 1A</span>
+          <span class="tl-duration">3 สัปดาห์</span>
+        </div>
+        <div class="tl-title">Foundation — Auth + Contractor Registry</div>
+        <ul class="tl-tasks">
+          <li class="tl-task">ระบบ Login / JWT / Role Management</li>
+          <li class="tl-task">User Management (CRUD)</li>
+          <li class="tl-task">Contractor Company Registry</li>
+          <li class="tl-task">Contractor Individual Registration (ข้อมูลพื้นฐาน + รูป)</li>
+          <li class="tl-task">PDPA Form (Digital Consent)</li>
+          <li class="tl-task">File Upload Service (MinIO)</li>
+        </ul>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-header">
+          <span class="tl-phase">Phase 1B</span>
+          <span class="tl-duration">3 สัปดาห์</span>
+        </div>
+        <div class="tl-title">Certificate & ID Card</div>
+        <ul class="tl-tasks">
+          <li class="tl-task">Certificate Management (Upload, View, Expiry)</li>
+          <li class="tl-task">Training History Record</li>
+          <li class="tl-task">Contractor ID Card Template + PDF Generation</li>
+          <li class="tl-task">QR Code บนบัตร (Linked to Contractor Profile)</li>
+          <li class="tl-task">Expiry Alert ระบบ + Email (Cron Job)</li>
+        </ul>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-header">
+          <span class="tl-phase">Phase 1C</span>
+          <span class="tl-duration">4 สัปดาห์</span>
+        </div>
+        <div class="tl-title">E-Work Permit Core</div>
+        <ul class="tl-tasks">
+          <li class="tl-task">Work Permit Form (สร้าง WP ครบทุกส่วน)</li>
+          <li class="tl-task">Contractor Link Generation + Public Form</li>
+          <li class="tl-task">4-Step Approval Flow Engine</li>
+          <li class="tl-task">Digital Signature Integration</li>
+          <li class="tl-task">Problem Tracking ระหว่างงาน</li>
+          <li class="tl-task">Job Closure Flow</li>
+          <li class="tl-task">Work Permit PDF Generation (ครบทุกส่วน)</li>
+        </ul>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-header">
+          <span class="tl-phase">Phase 1D</span>
+          <span class="tl-duration">3 สัปดาห์</span>
+        </div>
+        <div class="tl-title">Email Notification + Dashboard</div>
+        <ul class="tl-tasks">
+          <li class="tl-task">Email Template ทั้งหมด (8+ Events)</li>
+          <li class="tl-task">Bull MQ Email Queue</li>
+          <li class="tl-task">Cron Jobs (Daily Expiry Check, Weekly Summary)</li>
+          <li class="tl-task">Dashboard (Charts: Permit Status, Work Type, Area)</li>
+          <li class="tl-task">Export Excel/PDF รายงาน</li>
+        </ul>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-header">
+          <span class="tl-phase">Phase 1E</span>
+          <span class="tl-duration">2 สัปดาห์</span>
+        </div>
+        <div class="tl-title">Guard Station + QR Scanner</div>
+        <ul class="tl-tasks">
+          <li class="tl-task">หน้าจอ Guard: สแกน QR บัตรผู้รับเหมา</li>
+          <li class="tl-task">ตรวจสถานะ Permit ปัจจุบันทันที</li>
+          <li class="tl-task">Check-in / Check-out Log</li>
+          <li class="tl-task">Mobile-friendly UI สำหรับ Tablet/Phone</li>
+        </ul>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-header">
+          <span class="tl-phase">Phase 1F</span>
+          <span class="tl-duration">2 สัปดาห์</span>
+        </div>
+        <div class="tl-title">Testing, UAT & Go-Live</div>
+        <ul class="tl-tasks">
+          <li class="tl-task">Unit Test + Integration Test ทุก Module</li>
+          <li class="tl-task">UAT กับ Safety Officer, HR, เจ้าของงาน (จริง)</li>
+          <li class="tl-task">Bug Fix + Performance Tuning</li>
+          <li class="tl-task">Data Migration (ผู้รับเหมาเดิม)</li>
+          <li class="tl-task">Training ผู้ใช้งาน + คู่มือ</li>
+          <li class="tl-task">Deploy Production + Monitor</li>
+        </ul>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <h3 class="sub"><span>▸</span> Phase 2 (Future) — หลัง Go-Live</h3>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h3>📱 Mobile App</h3>
+        <ul class="feature-list">
+          <li>React Native หรือ PWA</li>
+          <li>Push Notification แทน/เสริม Email</li>
+          <li>Offline Mode สำหรับในโรงงาน</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>🔗 API Integration</h3>
+        <ul class="feature-list">
+          <li>เชื่อม HR System (ข้อมูลพนักงาน)</li>
+          <li>เชื่อม ERP / SAP</li>
+          <li>Line Notify / Line OA</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>🤖 Smart Features</h3>
+        <ul class="feature-list">
+          <li>OCR อ่านใบเซอร์อัตโนมัติ</li>
+          <li>Risk Scoring สำหรับ Work Permit</li>
+          <li>Predictive Expiry Alerts</li>
+        </ul>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <h3 class="sub"><span>▸</span> Security Considerations</h3>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h3>🔐 Data Security</h3>
+        <ul class="feature-list">
+          <li>เข้ารหัส AES-256 สำหรับ National ID และข้อมูล PDPA</li>
+          <li>HTTPS บังคับทุก Endpoint</li>
+          <li>JWT มีอายุสั้น + Refresh Token Rotation</li>
+          <li>Rate Limiting บน API</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h3>📜 Audit & Compliance</h3>
+        <ul class="feature-list">
+          <li>Audit Log ทุก Action (who, when, what, IP)</li>
+          <li>ไม่ลบข้อมูลจริง (Soft Delete)</li>
+          <li>PDPA Compliance: เก็บข้อมูลสุขภาพแยก</li>
+          <li>Document Retention Policy กำหนดได้</li>
+        </ul>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<script>
+function showTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+  window.scrollTo(0, 0);
+}
+</script>
+
+</body>
+</html>

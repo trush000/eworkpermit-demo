@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Work Permits — E-Work Permit System</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-breadcrumb"><a href="../dashboard.html">Dashboard</a> /</span>
+        <span class="topbar-title">🪪 Work Permits</span>
+      </div>
+      <div class="topbar-right">
+        <span id="topbar-user" class="text-sm text-muted"></span>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div class="page-header">
+        <div>
+          <h1>รายการ Work Permit</h1>
+          <p>ค้นหา กรอง และจัดการ Work Permit ทั้งหมด</p>
+        </div>
+        <div class="flex-center gap-8" id="action-btns">
+          <button class="btn btn-ghost btn-sm" onclick="exportPermits()">📥 Export CSV</button>
+          <a href="create.html" class="btn btn-primary" id="btn-create" style="display:none;">➕ สร้างใหม่</a>
+        </div>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="stats-grid mb-16" id="mini-stats"></div>
+
+      <!-- Filters -->
+      <div class="card mb-16">
+        <div class="card-body" style="padding:16px;">
+          <div class="filter-bar">
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="inp-search" placeholder="ค้นหา รหัส, พื้นที่, บริษัท..." oninput="renderTable()">
+            </div>
+            <select class="filter-select" id="sel-status" onchange="renderTable()">
+              <option value="">ทุกสถานะ</option>
+              <option value="DRAFT">Draft</option>
+              <option value="PENDING_OWNER">รอเจ้าของงาน</option>
+              <option value="PENDING_AREA">รอเจ้าของพื้นที่</option>
+              <option value="PENDING_SAFETY">รอ จป.Safety</option>
+              <option value="PENDING_HR">รอ ผจก.บุคคล</option>
+              <option value="APPROVED">อนุมัติแล้ว</option>
+              <option value="CLOSED">ปิดงานแล้ว</option>
+              <option value="REJECTED">ปฏิเสธ</option>
+              <option value="CANCELLED">ยกเลิก</option>
+              <option value="EXTENDED">ต่ออายุ</option>
+            </select>
+            <select class="filter-select" id="sel-type" onchange="renderTable()">
+              <option value="">ทุกประเภท</option>
+              <option value="HOT_WORK">🔥 Hot Work</option>
+              <option value="COLD_WORK">❄️ Cold Work</option>
+            </select>
+            <select class="filter-select" id="sel-company" onchange="renderTable()">
+              <option value="">ทุกบริษัท</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="clearFilters()">✕ ล้างตัวกรอง</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="card">
+        <div class="card-body" style="padding:0;">
+          <div class="table-wrap" id="permits-table-wrap"></div>
+          <div id="pagination"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/db.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  const user = requireAuth('../index.html');
+  let currentPage = 1;
+  const PER_PAGE = 10;
+  let allPermits = [];
+
+  if (user) {
+    renderSidebar('../');
+    document.getElementById('topbar-user').textContent = user.full_name;
+
+    if (canDo(user, 'create_permit')) {
+      document.getElementById('btn-create').style.display = '';
+    }
+
+    // Populate company filter
+    const companies = dbGetAll('contractor_companies');
+    const selComp = document.getElementById('sel-company');
+    companies.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.company_name;
+      selComp.appendChild(opt);
+    });
+
+    loadData();
+  }
+
+  function loadData() {
+    allPermits = dbGetAll('work_permits');
+    // Sort by newest first
+    allPermits.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+
+    // Mini stats
+    document.getElementById('mini-stats').innerHTML = `
+      <div class="stat-card c-gold" style="padding:14px;">
+        <div class="stat-label">รอดำเนินการ</div>
+        <div class="stat-value" style="font-size:22px;">${allPermits.filter(p=>p.status.startsWith('PENDING')).length}</div>
+      </div>
+      <div class="stat-card c-green" style="padding:14px;">
+        <div class="stat-label">อนุมัติแล้ว</div>
+        <div class="stat-value" style="font-size:22px;">${allPermits.filter(p=>p.status==='APPROVED').length}</div>
+      </div>
+      <div class="stat-card c-purple" style="padding:14px;">
+        <div class="stat-label">ปิดงานแล้ว</div>
+        <div class="stat-value" style="font-size:22px;">${allPermits.filter(p=>p.status==='CLOSED').length}</div>
+      </div>
+      <div class="stat-card c-accent" style="padding:14px;">
+        <div class="stat-label">ทั้งหมด</div>
+        <div class="stat-value" style="font-size:22px;">${allPermits.length}</div>
+      </div>`;
+
+    renderTable();
+  }
+
+  function getFiltered() {
+    const q = document.getElementById('inp-search').value;
+    const status = document.getElementById('sel-status').value;
+    const type = document.getElementById('sel-type').value;
+    const company = document.getElementById('sel-company').value;
+
+    let data = allPermits;
+    if (q) data = filterTable(data, q, ['permit_code', 'work_area', 'contractor_company_name', 'dowa_owner_name']);
+    if (status) data = data.filter(p => p.status === status);
+    if (type) data = data.filter(p => p.work_type === type);
+    if (company) data = data.filter(p => p.contractor_company_id === company);
+    return data;
+  }
+
+  function renderTable() {
+    const filtered = getFiltered();
+    const paged = paginate(filtered, currentPage, PER_PAGE);
+
+    if (paged.items.length === 0) {
+      document.getElementById('permits-table-wrap').innerHTML =
+        '<div class="empty-state"><div class="empty-icon">🪪</div><h3>ไม่พบรายการ</h3><p>ลองปรับตัวกรองหรือสร้าง Work Permit ใหม่</p></div>';
+      document.getElementById('pagination').innerHTML = '';
+      return;
+    }
+
+    document.getElementById('permits-table-wrap').innerHTML = `
+      <table class="data-table">
+        <thead><tr>
+          <th>รหัส Permit</th>
+          <th>บริษัทผู้รับเหมา</th>
+          <th>พื้นที่ปฏิบัติงาน</th>
+          <th>ประเภท</th>
+          <th>วันที่</th>
+          <th>เจ้าของงาน</th>
+          <th>สถานะ</th>
+          <th>จัดการ</th>
+        </tr></thead>
+        <tbody>${paged.items.map(p => `
+          <tr>
+            <td class="td-mono">${p.permit_code}</td>
+            <td class="td-main">${p.contractor_company_name}</td>
+            <td>${p.work_area}</td>
+            <td>${p.work_type === 'HOT_WORK'
+              ? '<span class="badge badge-hot">🔥 Hot Work</span>'
+              : '<span class="badge badge-cold">❄️ Cold Work</span>'}</td>
+            <td>${formatDateRange(p.start_date, p.end_date)}</td>
+            <td>${p.dowa_owner_name}</td>
+            <td>${permitBadge(p.status)}</td>
+            <td>
+              <div class="td-actions">
+                <a href="detail.html?id=${p.id}" class="btn btn-ghost btn-sm">👁 ดู</a>
+                ${p.status === 'DRAFT' && canDo(user,'create_permit') ? `<button class="btn btn-danger btn-sm" onclick="deletePermit('${p.id}',event)">🗑</button>` : ''}
+              </div>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+
+    renderPagination('pagination', paged, 'goPage');
+  }
+
+  window.goPage = function(p) { currentPage = p; renderTable(); };
+
+  function clearFilters() {
+    document.getElementById('inp-search').value = '';
+    document.getElementById('sel-status').value = '';
+    document.getElementById('sel-type').value = '';
+    document.getElementById('sel-company').value = '';
+    currentPage = 1;
+    renderTable();
+  }
+
+  function deletePermit(id, e) {
+    e.preventDefault();
+    confirmAction('ลบ Work Permit นี้?', () => {
+      dbDelete('work_permits', id);
+      loadData();
+      showToast('ลบ Work Permit สำเร็จ', 'success');
+    });
+  }
+
+  function exportPermits() {
+    const data = getFiltered();
+    exportToCSV(data, 'work-permits.csv', [
+      { key: 'permit_code', label: 'รหัส Permit' },
+      { key: 'contractor_company_name', label: 'บริษัทผู้รับเหมา' },
+      { key: 'work_area', label: 'พื้นที่ปฏิบัติงาน' },
+      { key: 'work_type', label: 'ประเภทงาน' },
+      { key: 'start_date', label: 'วันเริ่ม' },
+      { key: 'end_date', label: 'วันสิ้นสุด' },
+      { key: 'dowa_owner_name', label: 'เจ้าของงาน' },
+      { key: 'status', label: 'สถานะ' },
+    ]);
+  }
+</script>
+</body>
+</html>

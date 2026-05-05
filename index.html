@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เข้าสู่ระบบ — E-Work Permit System</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  body { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg); }
+  .login-wrap { width: 100%; max-width: 440px; padding: 20px; }
+  .login-logo { text-align: center; margin-bottom: 32px; }
+  .login-logo .big-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #000;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 18px;
+    padding: 8px 20px;
+    border-radius: 8px;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+  .login-logo h1 { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .login-logo p { font-size: 13px; color: var(--text3); }
+  .login-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+  }
+  .login-card h2 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 24px; }
+  .divider-text {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text3);
+    margin: 16px 0;
+    position: relative;
+  }
+  .divider-text::before, .divider-text::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 40%;
+    height: 1px;
+    background: var(--border);
+  }
+  .divider-text::before { left: 0; }
+  .divider-text::after { right: 0; }
+  .demo-roles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .demo-role-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    color: var(--text);
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+  }
+  .demo-role-btn:hover { border-color: var(--accent); background: var(--accent-dim); }
+  .demo-role-btn .role-icon { font-size: 16px; margin-bottom: 4px; display: block; }
+  .demo-role-btn .role-name { font-size: 12px; font-weight: 600; display: block; }
+  .demo-role-btn .role-desc { font-size: 10px; color: var(--text3); display: block; margin-top: 1px; }
+  .bg-glow {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at 30% 20%, rgba(0,212,255,0.04) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(168,85,247,0.03) 0%, transparent 60%);
+  }
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+<div class="login-wrap">
+  <div class="login-logo">
+    <div class="big-badge">DOWA</div>
+    <h1>E-Work Permit & Contractor Control</h1>
+    <p>บริษัท โดวะ เทอร์โมเทค (ประเทศไทย) จำกัด</p>
+  </div>
+
+  <div class="login-card">
+    <h2>🔐 เข้าสู่ระบบ</h2>
+
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" id="inp-email" class="form-control" placeholder="กรอก Email บริษัท" value="natthawut@dowa-tht.co.th">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" id="inp-password" class="form-control" placeholder="กรอกรหัสผ่าน" value="admin123">
+    </div>
+
+    <div id="login-error" class="error-box mt-8" style="display:none;">
+      <strong>❌ เข้าสู่ระบบไม่สำเร็จ</strong> — Email หรือรหัสผ่านไม่ถูกต้อง
+    </div>
+
+    <button class="btn btn-primary w-full mt-16" style="justify-content:center;" onclick="doLogin()">
+      เข้าสู่ระบบ →
+    </button>
+
+    <div class="divider-text">หรือเลือก Demo Role</div>
+
+    <div class="demo-roles">
+      <button class="demo-role-btn" onclick="quickLogin('natthawut@dowa-tht.co.th','admin123')">
+        <span class="role-icon">🔧</span>
+        <span class="role-name">Admin</span>
+        <span class="role-desc">คุณนัฐวุฒิ (IT)</span>
+      </button>
+      <button class="demo-role-btn" onclick="quickLogin('owner@dowa.co.th','owner123')">
+        <span class="role-icon">👔</span>
+        <span class="role-name">Work Owner</span>
+        <span class="role-desc">คุณวิชัย (Prod.)</span>
+      </button>
+      <button class="demo-role-btn" onclick="quickLogin('area@dowa.co.th','area123')">
+        <span class="role-icon">🏭</span>
+        <span class="role-name">Area Owner</span>
+        <span class="role-desc">คุณสมชาย (Maint.)</span>
+      </button>
+      <button class="demo-role-btn" onclick="quickLogin('wassana@dowa-tht.co.th','safety123')">
+        <span class="role-icon">🦺</span>
+        <span class="role-name">Safety</span>
+        <span class="role-desc">คุณวาสนา (HR)</span>
+      </button>
+      <button class="demo-role-btn" onclick="quickLogin('aphisit@dowa-tht.co.th','safety123')">
+        <span class="role-icon">🦺</span>
+        <span class="role-name">Safety</span>
+        <span class="role-desc">คุณอภิสิทธิ์ (HR)</span>
+      </button>
+      <button class="demo-role-btn" onclick="quickLogin('karnmanee@dowa-tht.co.th','hr123')">
+        <span class="role-icon">👩‍💼</span>
+        <span class="role-name">HR Manager</span>
+        <span class="role-desc">คุณกานมณี (HR)</span>
+      </button>
+    </div>
+
+    <p class="text-xs text-muted mt-16" style="text-align:center;">
+      Demo system — ข้อมูลเก็บใน localStorage ของเบราว์เซอร์ | 
+      <a href="javascript:void(0)" onclick="localStorage.clear();sessionStorage.clear();location.reload();" class="text-accent" style="text-decoration:underline;">รีเซ็ตระบบทั้งหมด</a>
+    </p>
+  </div>
+</div>
+
+<script src="js/db.js"></script>
+<script src="js/utils.js"></script>
+<script>
+  // Redirect if already logged in (with loop protection)
+  const loggedUser = getCurrentUser();
+  const loopKey = 'ewp_redirect_ts';
+  const now = Date.now();
+  const lastRedirect = sessionStorage.getItem(loopKey);
+
+  if (loggedUser && !window.location.search.includes('logout')) {
+    if (lastRedirect && (now - parseInt(lastRedirect) < 2000)) {
+      console.error('Redirect loop detected! Clearing session to recover.');
+      localStorage.removeItem('ewp_user');
+      showToast('เกิดข้อผิดพลาดในการนำทาง ระบบได้รีเซ็ตเซสชันของคุณแล้ว', 'warning');
+    } else {
+      sessionStorage.setItem(loopKey, now);
+      console.log('Valid session found, moving to dashboard...');
+      window.location.replace('dashboard.html');
+    }
+  }
+
+  function doLogin() {
+    const email = document.getElementById('inp-email').value.trim();
+    const pass = document.getElementById('inp-password').value;
+    
+    if (!email || !pass) {
+      showToast('กรุณากรอกอีเมลและรหัสผ่าน', 'warning');
+      return;
+    }
+
+    const user = loginUser(email, pass);
+    if (user) {
+      console.log('Login success, redirecting...');
+      window.location.replace('dashboard.html');
+    } else {
+      showToast('อีเมลหรือรหัสผ่านไม่ถูกต้อง', 'error');
+    }
+  }
+
+  function quickLogin(email, pass) {
+    document.getElementById('inp-email').value = email;
+    document.getElementById('inp-password').value = pass;
+    doLogin();
+  }
+
+  document.getElementById('inp-password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+</script>
+</body>
+</html>

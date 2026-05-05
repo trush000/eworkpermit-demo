@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Work Permit Detail — E-Work Permit System</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  .sig-pad-wrap canvas { width: 100%; height: 120px; }
+  .detail-row { display: flex; gap: 32px; margin-bottom: 12px; flex-wrap: wrap; }
+  .detail-field { flex: 1; min-width: 160px; }
+  .detail-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+  .detail-value { font-size: 13px; color: var(--text); font-weight: 500; }
+  .sig-box { border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 12px; color: var(--green); background: var(--green-dim); display: inline-flex; align-items: center; gap: 6px; }
+</style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-breadcrumb"><a href="../dashboard.html">Dashboard</a> / <a href="index.html">Work Permits</a> /</span>
+        <span class="topbar-title" id="topbar-code">Detail</span>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-secondary btn-sm no-print" onclick="copyContractorLink()">🔗 Copy Link</button>
+        <button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨️ Print</button>
+        <span id="topbar-user" class="text-sm text-muted"></span>
+      </div>
+    </header>
+
+    <div class="page-content" id="page-body">
+      <div class="empty-state"><div class="empty-icon">⏳</div><h3>กำลังโหลด...</h3></div>
+    </div>
+  </div>
+</div>
+
+<!-- Approval Modal -->
+<div class="modal-overlay" id="modal-approve">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-approve-title">✍️ ลงนามอนุมัติ</span>
+      <button class="modal-close" onclick="closeModal('modal-approve')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">หมายเหตุ (ถ้ามี)</label>
+        <textarea id="inp-comment" class="form-control" rows="2" placeholder="ข้อความเพิ่มเติม..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ลายเซ็นดิจิทัล <span class="req">*</span></label>
+        <div class="sig-pad-wrap">
+          <canvas id="sig-canvas"></canvas>
+          <div class="sig-pad-hint">✍️ วาดลายเซ็นที่นี่</div>
+        </div>
+        <div class="sig-pad-actions">
+          <button type="button" class="btn btn-ghost btn-sm" id="sig-clear">🗑 ล้าง</button>
+          <span class="text-xs text-muted">หรือพิมพ์ชื่อ: <input type="text" id="inp-typed-sig" class="form-control" style="display:inline-block;width:180px;padding:4px 8px;" placeholder="ชื่อ-นามสกุล"></span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-approve')">ยกเลิก</button>
+      <button class="btn btn-danger" id="btn-return" onclick="doApproval('RETURNED')" style="display:none;">🔁 ส่งกลับแก้ไข</button>
+      <button class="btn btn-success" id="btn-approve" onclick="doApproval('APPROVED')">✅ อนุมัติ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Issue Modal -->
+<div class="modal-overlay" id="modal-issue">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🚧 บันทึกปัญหา</span>
+      <button class="modal-close" onclick="closeModal('modal-issue')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">รายละเอียดปัญหา <span class="req">*</span></label>
+        <textarea id="inp-problem" class="form-control" rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">วิธีการแก้ไข</label>
+        <textarea id="inp-solution" class="form-control" rows="2"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">ผู้รับผิดชอบ</label>
+          <input type="text" id="inp-responsible" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">วันที่แก้ไขเสร็จ</label>
+          <input type="date" id="inp-resolve-date" class="form-control">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-issue')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveIssue()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Close Job Modal -->
+<div class="modal-overlay" id="modal-close-job">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🔒 ปิดงาน (Job Closure)</span>
+      <button class="modal-close" onclick="closeModal('modal-close-job')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="warn-box mb-16">
+        <strong>⚠️ การปิดงานต้องได้รับการยืนยัน 3 ฝ่าย</strong> (เจ้าของงาน, จป.Safety, ผจก.บุคคล) เพื่อให้งานเสร็จสิ้นสมบูรณ์
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">สถานะการลงนามปิดงาน</label>
+        <div id="closure-sig-status" style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
+          <!-- Will be rendered by JS -->
+        </div>
+      </div>
+
+      <div id="closure-sign-area" style="display:none;border-top:1px solid var(--border);padding-top:16px;">
+        <label class="form-label">ลงนามในฐานะ <span id="closure-role-label" class="text-accent font-bold"></span></label>
+        <div class="sig-pad-wrap">
+          <canvas id="sig-canvas-closure"></canvas>
+          <div class="sig-pad-hint">✍️ วาดลายเซ็นเพื่อยืนยันปิดงาน</div>
+        </div>
+        <div class="sig-pad-actions">
+          <button type="button" class="btn btn-ghost btn-sm" id="sig-clear-closure">🗑 ล้าง</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-close-job')">ปิดหน้าต่าง</button>
+      <button class="btn btn-primary" id="btn-do-closure-sign" style="display:none;" onclick="doClosureSign()">✍️ ยืนยันปิดงาน</button>
+    </div>
+  </div>
+</div>
+
+<!-- Extend Modal -->
+<div class="modal-overlay" id="modal-extend">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">⏳ ต่ออายุ Work Permit</span>
+      <button class="modal-close" onclick="closeModal('modal-extend')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">วันหมดอายุใหม่</label>
+        <input type="date" id="inp-new-expiry" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">เหตุผลการขอต่ออายุ</label>
+        <textarea id="inp-extend-reason" class="form-control" rows="3"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-extend')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="extendPermit()">ยืนยันต่ออายุ</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/db.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  const user = requireAuth('../index.html');
+  let permit, approvals, workers, issues, sigPad, sigPadClosure, approvalStepTarget;
+
+  if (user) {
+    renderSidebar('../');
+    document.getElementById('topbar-user').textContent = user.full_name;
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    if (!id) { window.location.href = 'index.html'; }
+    else loadPermit(id);
+  }
+
+  function loadPermit(id) {
+    permit = dbGetById('work_permits', id);
+    if (!permit) { document.getElementById('page-body').innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div><h3>ไม่พบ Work Permit</h3></div>'; return; }
+
+    approvals = dbWhere('permit_approvals', { permit_id: id }).sort((a,b) => a.step - b.step);
+    workers = dbWhere('permit_workers', { permit_id: id });
+    issues = dbWhere('permit_issues', { permit_id: id });
+
+    document.getElementById('topbar-code').textContent = permit.permit_code;
+    renderDetail();
+  }
+
+  function renderDetail() {
+    const canApprove = canUserApprove();
+    const workTypeLabel = permit.work_type === 'HOT_WORK' ? '🔥 Hot Work' : '❄️ Cold Work';
+    const subtypes = permit.work_type === 'HOT_WORK'
+      ? (permit.hot_work_types || []).map(k => HOT_WORK_TYPES.find(t=>t.key===k)?.label||k).join(', ')
+      : (permit.cold_work_types || []).map(k => COLD_WORK_TYPES.find(t=>t.key===k)?.label||k).join(', ');
+    const ppeLabels = (permit.ppe_required || []).map(k => PPE_OPTIONS.find(p=>p.key===k)?.label||k).join(' · ') || '-';
+
+    // Workers table
+    const workerRows = workers.map(w => {
+      const c = dbGetById('contractors', w.contractor_id);
+      return c ? `<tr>
+        <td class="td-main">${c.first_name} ${c.last_name}</td>
+        <td class="td-mono">${c.card_number || '-'}</td>
+        <td>${w.is_supervisor ? '<span class="badge badge-accent">หัวหน้างาน</span>' : 'คนงาน'}</td>
+        <td>${w.check_in || '-'}</td>
+        <td>${w.check_out || '-'}</td>
+      </tr>` : '';
+    }).join('');
+
+    // Issues
+    const issueRows = issues.map(i => `
+      <tr>
+        <td>${formatDate(i.issue_date)}</td>
+        <td>${i.problem}</td>
+        <td>${i.solution || '-'}</td>
+        <td>${i.responsible_by || '-'}</td>
+        <td><span class="badge ${i.resolved_date ? 'badge-approved' : 'badge-pending'}">${i.resolved_date ? 'แก้ไขแล้ว' : 'รอแก้ไข'}</span></td>
+      </tr>`).join('');
+
+    // Audit trail
+    const auditItems = approvals.filter(a => a.acted_at).map(a => {
+      const colorMap = { APPROVED: 'green', REJECTED: 'red', RETURNED: 'gold', PENDING: 'accent' };
+      return `<div class="audit-item">
+        <div class="audit-dot ${colorMap[a.status] || 'accent'}"></div>
+        <div class="audit-content">
+          <div class="audit-action">${a.status === 'APPROVED' ? '✅ อนุมัติ' : a.status === 'RETURNED' ? '🔁 ส่งกลับแก้ไข' : a.status === 'REJECTED' ? '❌ ปฏิเสธ' : '⏳'} — ${ROLES_STEP[a.role] || a.role}</div>
+          <div class="audit-meta">${a.approver_name} · ${formatDateTime(a.acted_at)}${a.comment ? ' · "' + a.comment + '"' : ''}</div>
+          ${a.signature_data ? `<div class="mt-8"><img src="${a.signature_data}" style="height:30px;filter:invert(0.8) hue-rotate(180deg);" alt="Signature"></div>` : ''}
+        </div>
+      </div>`;
+    }).join('') || '<p class="text-muted text-sm">ยังไม่มีประวัติการอนุมัติ</p>';
+
+    const ROLES_STEP = { WORK_OWNER: 'เจ้าของงาน', AREA_OWNER: 'เจ้าของพื้นที่', SAFETY: 'จป./Safety', HR_MGR: 'ผจก.บุคคล' };
+
+    document.getElementById('page-body').innerHTML = `
+      <div class="page-header">
+        <div>
+          <h1 class="mono">${permit.permit_code}</h1>
+          <div class="flex-center gap-8 mt-4">
+            ${permitBadge(permit.status)}
+            <span class="badge ${permit.work_type==='HOT_WORK'?'badge-hot':'badge-cold'}">${workTypeLabel}</span>
+            <span class="text-muted text-sm">สร้างเมื่อ ${formatDateTime(permit.created_at)}</span>
+          </div>
+        </div>
+        <div class="flex-center gap-8 no-print">
+          ${permit.status === 'APPROVED' ? `<button class="btn btn-warning" onclick="openModal('modal-issue')">🚧 บันทึกปัญหา</button>` : ''}
+          ${permit.status === 'APPROVED' ? `<button class="btn btn-secondary" onclick="openModal('modal-extend')">⏳ ต่ออายุ</button>` : ''}
+          ${['PENDING_OWNER','PENDING_AREA','PENDING_SAFETY','PENDING_HR','APPROVED'].includes(permit.status) ? `<button class="btn btn-ghost" onclick="cancelPermit()">🚫 ยกเลิก</button>` : ''}
+          ${permit.status === 'APPROVED' && (user.role === 'SAFETY' || user.role === 'ADMIN' || user.role === 'WORK_OWNER' || user.role === 'HR_MGR') ? `<button class="btn btn-danger" onclick="openModalCloseJob()">🔒 ปิดงาน</button>` : ''}
+          ${canApprove ? `<button class="btn btn-primary" onclick="openApprovalModal()">✍️ ดำเนินการอนุมัติ</button>` : ''}
+          <button class="btn btn-ghost" onclick="window.print()">🖨️ พิมพ์</button>
+        </div>
+      </div>
+
+      <!-- Approval Steps -->
+      <div class="card mb-16">
+        <div class="card-header"><span class="card-title">📋 สถานะการอนุมัติ</span></div>
+        <div class="card-body">
+          <div class="approval-steps" id="approval-steps-render"></div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tab-nav">
+        <button class="tab-btn active" data-tab="tab-info" onclick="switchTab(this)">📄 ข้อมูล</button>
+        <button class="tab-btn" data-tab="tab-workers" onclick="switchTab(this)">👷 คนงาน (${workers.length})</button>
+        <button class="tab-btn" data-tab="tab-issues" onclick="switchTab(this)">🚧 ปัญหา (${issues.length})</button>
+        <button class="tab-btn" data-tab="tab-audit" onclick="switchTab(this)">📜 ประวัติ</button>
+      </div>
+
+      <div id="tab-info" class="tab-pane active">
+        <div class="grid-2 gap-16">
+          <div class="card">
+            <div class="card-header"><span class="card-title">📋 ข้อมูลหลัก</span></div>
+            <div class="card-body">
+              <div class="detail-row">
+                <div class="detail-field"><div class="detail-label">บริษัทผู้รับเหมา</div><div class="detail-value text-accent">${permit.contractor_company_name}</div></div>
+                <div class="detail-field"><div class="detail-label">พื้นที่</div><div class="detail-value">${permit.work_area}</div></div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-field"><div class="detail-label">วันที่ปฏิบัติงาน</div><div class="detail-value">${formatDateRange(permit.start_date, permit.end_date)}</div></div>
+                <div class="detail-field"><div class="detail-label">เวลา</div><div class="detail-value">${permit.start_time||'-'} – ${permit.end_time||'-'}</div></div>
+                <div class="detail-field"><div class="detail-label">จำนวนคนงาน</div><div class="detail-value">${permit.worker_count} คน</div></div>
+              </div>
+              <div class="detail-field" style="margin-bottom:12px;"><div class="detail-label">รายละเอียดงาน</div><div class="detail-value">${permit.work_description}</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">⛑️ PPE & ประเภทงาน</span></div>
+            <div class="card-body">
+              <div class="detail-field" style="margin-bottom:12px;"><div class="detail-label">ประเภทย่อย</div><div class="detail-value">${subtypes || '-'}</div></div>
+              <div class="detail-label">PPE ที่กำหนด</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">
+                ${(permit.ppe_required||[]).map(k=>{const p=PPE_OPTIONS.find(o=>o.key===k); return p?`<span class="badge badge-accent">${p.icon} ${p.label}</span>`:''}).join('')||'<span class="text-muted">-</span>'}
+              </div>
+              <div class="mt-16 pt-16" style="border-top:1px solid var(--border);">
+                <div class="detail-label">KYM / มาตรการความปลอดภัย</div>
+                <div class="detail-value" style="white-space:pre-line;">${permit.kym_sheet_data || '<span class="text-muted">ไม่มีข้อมูลมาตรการความปลอดภัย</span>'}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card mt-16">
+          <div class="card-header"><span class="card-title">📎 เอกสารแนบ</span></div>
+          <div class="card-body">
+            <div class="grid-2 gap-8">
+              <div class="info-box flex-center gap-12" style="background:var(--bg3);cursor:pointer;">
+                <span style="font-size:24px;">📄</span>
+                <div>
+                  <div class="text-sm font-bold">Risk Assessment.pdf</div>
+                  <div class="text-xs text-muted">2.4 MB · Uploaded by ${permit.created_by}</div>
+                </div>
+              </div>
+              <div class="info-box flex-center gap-12" style="background:var(--bg3);cursor:pointer;">
+                <span style="font-size:24px;">🖼️</span>
+                <div>
+                  <div class="text-sm font-bold">Site_Photo_PreWork.jpg</div>
+                  <div class="text-xs text-muted">1.1 MB · Uploaded by ${permit.created_by}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card mt-16">
+          <div class="card-header"><span class="card-title">👤 ผู้เกี่ยวข้อง</span></div>
+          <div class="card-body">
+            <div class="detail-row">
+              <div class="detail-field"><div class="detail-label">ผู้คุมงาน (ผู้รับเหมา)</div><div class="detail-value">${permit.supervisor_name} ${permit.supervisor_phone ? '· ' + permit.supervisor_phone : ''}</div></div>
+              <div class="detail-field"><div class="detail-label">เจ้าของงาน (DOWA)</div><div class="detail-value">${permit.dowa_owner_name} ${permit.dowa_owner_phone ? '· ' + permit.dowa_owner_phone : ''}</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card mt-16 no-print" id="contractor-link-card" style="display:none;">
+          <div class="card-header"><span class="card-title">🔗 Contractor Portal (แบบฟอร์มผู้รับเหมา)</span></div>
+          <div class="card-body">
+            <div class="info-box">
+              <p class="text-sm">ส่งลิงก์นี้ให้ผู้รับเหมาเพื่อกรอกข้อมูลพนักงาน, เลือก PPE และ KYM ด้วยตนเอง</p>
+              <div class="flex-center gap-8 mt-8">
+                <input type="text" id="share-url" class="form-control" readonly>
+                <button class="btn btn-primary btn-sm" onclick="copyContractorLink()">คัดลอก</button>
+              </div>
+              <p class="text-xs text-muted mt-8">💡 ลิงก์นี้สามารถเข้าถึงได้โดยไม่ต้องใช้รหัสผ่าน (Public Link)</p>
+            </div>
+          </div>
+        </div>
+        <div class="card mt-16">
+          <div class="card-header"><span class="card-title">📱 Digital Pass (QR Code)</span></div>
+          <div class="card-body">
+            <div style="display:flex;gap:24px;align-items:center;">
+              <div id="permit-qr" style="background:#fff;padding:12px;border-radius:8px;"></div>
+              <div>
+                <p class="text-sm font-bold">QR Code สำหรับตรวจสอบงาน</p>
+                <p class="text-xs text-muted mt-4">รปภ. หรือ Safety สามารถสแกนเพื่อตรวจสอบสถานะล่าสุดของใบอนุญาตนี้ได้</p>
+                <button class="btn btn-ghost btn-sm mt-8" onclick="window.print()">📥 ดาวน์โหลดใบอนุญาต (PDF)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-workers" class="tab-pane">
+        <div class="card">
+          <div class="card-header"><span class="card-title">👷 รายชื่อคนงาน</span></div>
+          <div class="card-body" style="padding:0;">
+            ${workers.length > 0 ? `<table class="data-table"><thead><tr><th>ชื่อ</th><th>บัตร</th><th>ตำแหน่ง</th><th>Check In</th><th>Check Out</th></tr></thead><tbody>${workerRows}</tbody></table>`
+            : '<div class="empty-state" style="padding:30px;"><div class="empty-icon" style="font-size:24px;">👷</div><p>ยังไม่มีรายชื่อคนงาน</p></div>'}
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-issues" class="tab-pane">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🚧 บันทึกปัญหา</span>
+            ${permit.status === 'APPROVED' ? `<button class="btn btn-warning btn-sm" onclick="openModal('modal-issue')">+ บันทึกปัญหา</button>` : ''}
+          </div>
+          <div class="card-body" style="padding:0;">
+            ${issues.length > 0 ? `<table class="data-table"><thead><tr><th>วันที่</th><th>ปัญหา</th><th>วิธีแก้ไข</th><th>ผู้รับผิดชอบ</th><th>สถานะ</th></tr></thead><tbody>${issueRows}</tbody></table>`
+            : '<div class="empty-state" style="padding:30px;"><div class="empty-icon" style="font-size:24px;">✅</div><p>ไม่มีบันทึกปัญหา</p></div>'}
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-audit" class="tab-pane">
+        <div class="card">
+          <div class="card-header"><span class="card-title">📜 ประวัติการดำเนินการ</span></div>
+          <div class="card-body">
+            <div class="audit-trail">${auditItems}</div>
+          </div>
+        </div>
+      </div>`;
+
+    renderApprovalSteps();
+    
+    // Render QR Code
+    const qrContainer = document.getElementById('permit-qr');
+    if (qrContainer) {
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?id=' + permit.id)}`;
+      qrContainer.innerHTML = `<img src="${qrUrl}" alt="Permit QR" style="display:block;">`;
+    }
+
+    // Render Contractor Link
+    if (permit.status === 'DRAFT' || permit.status.startsWith('PENDING')) {
+      const linkCard = document.getElementById('contractor-link-card');
+      const shareUrl = document.getElementById('share-url');
+      if (linkCard && shareUrl) {
+        const url = window.location.origin + window.location.pathname.replace('work-permits/detail.html', 'contractor-form.html') + '?token=' + permit.contractor_link_token;
+        shareUrl.value = url;
+        linkCard.style.display = 'block';
+      }
+    }
+  }
+
+  function copyContractorLink() {
+    const shareUrl = document.getElementById('share-url');
+    if (shareUrl) {
+      shareUrl.select();
+      document.execCommand('copy');
+      showToast('คัดลอกลิงก์เรียบร้อยแล้ว', 'success');
+    }
+  }
+
+  const ROLES_STEP_MAP = {
+    WORK_OWNER: 'เจ้าของงาน', AREA_OWNER: 'เจ้าของพื้นที่', SAFETY: 'จป./Safety', HR_MGR: 'ผจก.บุคคล'
+  };
+
+  function renderApprovalSteps() {
+    const steps = [
+      { key: 'WORK_OWNER', label: 'เจ้าของงาน', num: '1' },
+      { key: 'AREA_OWNER', label: 'เจ้าของพื้นที่', num: '2' },
+      { key: 'SAFETY', label: 'จป./Safety', num: '3' },
+      { key: 'HR_MGR', label: 'ผจก.บุคคล', num: '4' },
+    ];
+
+    const container = document.getElementById('approval-steps-render');
+    if (!container) return;
+
+    container.innerHTML = steps.map((s, i) => {
+      const approval = approvals.find(a => a.role === s.key);
+      let cls = '';
+      let icon = s.num;
+      let statusLabel = 'รอดำเนินการ';
+
+      if (approval) {
+        if (approval.status === 'APPROVED') { cls = 'done'; icon = '✓'; statusLabel = formatDate(approval.acted_at) || 'อนุมัติแล้ว'; }
+        else if (approval.status === 'REJECTED') { cls = 'rejected'; icon = '✕'; statusLabel = 'ปฏิเสธ'; }
+        else if (approval.status === 'RETURNED') { cls = 'returned'; icon = '↩'; statusLabel = 'ส่งกลับ'; }
+        else if (approval.status === 'PENDING') { cls = 'active'; icon = '…'; statusLabel = 'รออนุมัติ'; }
+      }
+
+      return `<div class="approval-step ${cls}">
+        <div class="step-circle">${icon}</div>
+        <div class="step-label">${s.label}</div>
+        <div class="step-status">${statusLabel}</div>
+        ${approval?.approver_name ? `<div class="step-status" style="color:var(--text2);">${approval.approver_name}</div>` : ''}
+      </div>`;
+    }).join('');
+  }
+
+  function canUserApprove() {
+    if (!permit || !user) return false;
+    const stepMap = { PENDING_OWNER: 'WORK_OWNER', PENDING_AREA: 'AREA_OWNER', PENDING_SAFETY: 'SAFETY', PENDING_HR: 'HR_MGR' };
+    const requiredRole = stepMap[permit.status];
+    if (!requiredRole) return false;
+    return user.role === requiredRole || user.role === 'ADMIN';
+  }
+
+  function openApprovalModal() {
+    const stepMap = { PENDING_OWNER: 'WORK_OWNER', PENDING_AREA: 'AREA_OWNER', PENDING_SAFETY: 'SAFETY', PENDING_HR: 'HR_MGR' };
+    approvalStepTarget = stepMap[permit.status];
+    document.getElementById('btn-return').style.display = ['WORK_OWNER','AREA_OWNER','SAFETY','HR_MGR'].includes(approvalStepTarget) ? '' : 'none';
+    document.getElementById('modal-approve-title').textContent = `✍️ อนุมัติ — ${ROLES_STEP_MAP[approvalStepTarget]}`;
+    document.getElementById('inp-comment').value = '';
+    document.getElementById('inp-typed-sig').value = user.full_name;
+    openModal('modal-approve');
+    setTimeout(() => {
+      sigPad = initSignaturePad('sig-canvas', 'sig-clear');
+    }, 100);
+  }
+
+  function doApproval(action) {
+    const comment = document.getElementById('inp-comment').value;
+    const typedSig = document.getElementById('inp-typed-sig').value;
+    const sigData = sigPad?.getDataURL() || (typedSig ? `typed:${typedSig}` : null);
+
+    if (!sigData && action === 'APPROVED') { showToast('กรุณาลงลายเซ็นก่อนอนุมัติ', 'error'); return; }
+
+    // Update approval record
+    const approval = approvals.find(a => a.role === approvalStepTarget);
+    if (approval) {
+      dbUpdate('permit_approvals', approval.id, {
+        status: action,
+        approver_id: user.id,
+        approver_name: user.full_name,
+        signature_data: sigData || '',
+        comment: comment,
+        acted_at: new Date().toISOString(),
+        ip_address: '192.168.1.x',
+      });
+    }
+
+    // Update permit status
+    const nextStatusMap = {
+      WORK_OWNER: { APPROVED: 'PENDING_AREA', RETURNED: 'RETURNED', REJECTED: 'REJECTED' },
+      AREA_OWNER: { APPROVED: 'PENDING_SAFETY', RETURNED: 'RETURNED', REJECTED: 'REJECTED' },
+      SAFETY: { APPROVED: 'PENDING_HR', RETURNED: 'RETURNED', REJECTED: 'REJECTED' },
+      HR_MGR: { APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED' },
+    };
+    const newStatus = nextStatusMap[approvalStepTarget]?.[action] || permit.status;
+    dbUpdate('work_permits', permit.id, { status: newStatus });
+
+    // Create notification
+    dbInsert('notifications', {
+      type: 'SYSTEM',
+      event: `WP_${action}`,
+      recipient_email: 'all@dowa.co.th',
+      subject: `Work Permit ${permit.permit_code} — ${action === 'APPROVED' ? 'อนุมัติแล้ว' : action === 'RETURNED' ? 'ส่งกลับแก้ไข' : 'ปฏิเสธ'}`,
+      ref_type: 'work_permit',
+      ref_id: permit.id,
+      sent_at: new Date().toISOString(),
+      status: 'SENT',
+    });
+
+    closeModal('modal-approve');
+    showToast(`ดำเนินการเรียบร้อย: ${action === 'APPROVED' ? '✅ อนุมัติ' : action === 'RETURNED' ? '🔁 ส่งกลับ' : '❌ ปฏิเสธ'}`, 'success');
+    loadPermit(permit.id);
+  }
+
+  function saveIssue() {
+    const problem = document.getElementById('inp-problem').value.trim();
+    if (!problem) { showToast('กรุณากรอกรายละเอียดปัญหา', 'error'); return; }
+    dbInsert('permit_issues', {
+      permit_id: permit.id,
+      issue_date: todayStr(),
+      problem: problem,
+      solution: document.getElementById('inp-solution').value,
+      responsible_by: document.getElementById('inp-responsible').value,
+      resolved_date: document.getElementById('inp-resolve-date').value || null,
+      result: '',
+      inspector: user.full_name,
+    });
+    closeModal('modal-issue');
+    showToast('บันทึกปัญหาสำเร็จ', 'success');
+    loadPermit(permit.id);
+  }
+
+  function openModalCloseJob() {
+    renderClosureStatus();
+    openModal('modal-close-job');
+    
+    const rolesAllowed = ['WORK_OWNER', 'SAFETY', 'HR_MGR'];
+    if (rolesAllowed.includes(user.role)) {
+      const sigs = permit.closure_sigs || {};
+      if (!sigs[user.role]?.signed) {
+        document.getElementById('closure-sign-area').style.display = 'block';
+        document.getElementById('btn-do-closure-sign').style.display = 'inline-block';
+        document.getElementById('closure-role-label').textContent = ROLES_STEP_MAP[user.role];
+        setTimeout(() => {
+          sigPadClosure = initSignaturePad('sig-canvas-closure', 'sig-clear-closure');
+        }, 100);
+      } else {
+        document.getElementById('closure-sign-area').style.display = 'none';
+        document.getElementById('btn-do-closure-sign').style.display = 'none';
+      }
+    }
+  }
+
+  function renderClosureStatus() {
+    const sigs = permit.closure_sigs || {};
+    const roles = [
+      { key: 'WORK_OWNER', label: 'เจ้าของงาน' },
+      { key: 'SAFETY', label: 'จป.Safety' },
+      { key: 'HR_MGR', label: 'ผจก.บุคคล' }
+    ];
+
+    document.getElementById('closure-sig-status').innerHTML = roles.map(r => {
+      const s = sigs[r.key];
+      return `
+        <div class="flex-between p-12" style="background:var(--bg3);border-radius:8px;border:1px solid var(--border);">
+          <div>
+            <div class="font-bold text-sm">${r.label}</div>
+            <div class="text-xs ${s?.signed ? 'text-success' : 'text-muted'}">${s?.signed ? '✅ ลงนามแล้วโดย ' + s.name : '⏳ รอการลงนาม'}</div>
+          </div>
+          ${s?.signed ? `<img src="${s.signature}" style="height:24px;filter:invert(0.8) hue-rotate(180deg);">` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  function doClosureSign() {
+    const sigData = sigPadClosure?.getDataURL();
+    if (!sigData) { showToast('กรุณาลงลายเซ็นเพื่อยืนยัน', 'error'); return; }
+
+    const sigs = permit.closure_sigs || {};
+    sigs[user.role] = {
+      signed: true,
+      name: user.full_name,
+      date: new Date().toISOString(),
+      signature: sigData
+    };
+
+    dbUpdate('work_permits', permit.id, { closure_sigs: sigs });
+    
+    // Check if all 3 signed
+    const allSigned = sigs.WORK_OWNER?.signed && sigs.SAFETY?.signed && sigs.HR_MGR?.signed;
+    if (allSigned) {
+      dbUpdate('work_permits', permit.id, { status: 'CLOSED' });
+      showToast('🔒 ทุกฝ่ายลงนามครบถ้วน ปิดงานเรียบร้อยแล้ว', 'success');
+    } else {
+      showToast('✅ ลงนามส่วนของคุณเรียบร้อยแล้ว', 'success');
+    }
+
+    closeModal('modal-close-job');
+    loadPermit(permit.id);
+  }
+
+  function closeJob() {
+    // Legacy function, replaced by doClosureSign
+  }
+
+  function cancelPermit() {
+    if (!confirm('คุณต้องการยกเลิก Work Permit นี้ใช่หรือไม่?')) return;
+    dbUpdate('work_permits', permit.id, { status: 'CANCELLED' });
+    showToast('🚫 ยกเลิก Work Permit เรียบร้อย', 'info');
+    loadPermit(permit.id);
+  }
+
+  function extendPermit() {
+    const newExpiry = document.getElementById('inp-new-expiry').value;
+    const reason = document.getElementById('inp-extend-reason').value;
+    if (!newExpiry) { showToast('กรุณาระบุวันหมดอายุใหม่', 'error'); return; }
+    
+    dbUpdate('work_permits', permit.id, { 
+      end_date: newExpiry,
+      status: 'EXTENDED',
+      extend_reason: reason
+    });
+    
+    showToast('⏳ ต่ออายุ Work Permit เรียบร้อย', 'success');
+    closeModal('modal-extend');
+    loadPermit(permit.id);
+  }
+
+  function switchTab(btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab)?.classList.add('active');
+  }
+
+  function toggleCheck(label) {
+    const cb = label.querySelector('input[type="checkbox"]');
+    cb.checked = !cb.checked;
+    label.classList.toggle('checked', cb.checked);
+  }
+</script>
+</body>
+</html>

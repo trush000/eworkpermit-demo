@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ลงทะเบียนผู้รับเหมา — E-Work Permit System</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-breadcrumb"><a href="../dashboard.html">Dashboard</a> / <a href="index.html">ผู้รับเหมา</a> /</span>
+        <span class="topbar-title">📝 ลงทะเบียนผู้รับเหมา</span>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div class="page-header">
+        <div><h1>ลงทะเบียนผู้รับเหมาใหม่</h1><p>กรอกข้อมูลและยืนยัน PDPA ก่อนออกบัตร</p></div>
+        <a href="index.html" class="btn btn-ghost">← กลับ</a>
+      </div>
+
+      <div class="wizard-steps">
+        <div class="wizard-step active" id="wiz-1">1 · ข้อมูลส่วนตัว</div>
+        <div class="wizard-step" id="wiz-2">2 · PDPA Consent</div>
+        <div class="wizard-step" id="wiz-3">3 · ใบเซอร์ (CER)</div>
+        <div class="wizard-step" id="wiz-4">4 · ยืนยัน & ออกบัตร</div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="wizard-panel active" id="panel-1">
+        <div class="card mb-16">
+          <div class="card-header"><span class="card-title">👤 ข้อมูลส่วนตัว</span></div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">บริษัทผู้รับเหมา <span class="req">*</span></label>
+                <select id="f-company" class="form-control" required>
+                  <option value="">-- เลือกบริษัท --</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">สัญชาติ</label>
+                <select id="f-nationality" class="form-control">
+                  <option value="ไทย">ไทย</option>
+                  <option value="เมียนมา">เมียนมา</option>
+                  <option value="กัมพูชา">กัมพูชา</option>
+                  <option value="ลาว">ลาว</option>
+                  <option value="อื่นๆ">อื่นๆ</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">ชื่อ <span class="req">*</span></label>
+                <input type="text" id="f-fname" class="form-control" placeholder="ชื่อ" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">นามสกุล <span class="req">*</span></label>
+                <input type="text" id="f-lname" class="form-control" placeholder="นามสกุล" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">เลขบัตรประชาชน <span class="req">*</span></label>
+                <input type="text" id="f-national-id" class="form-control" placeholder="X-XXXX-XXXXX-XX-X" maxlength="17" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">วันเกิด</label>
+                <input type="date" id="f-birth" class="form-control">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">เบอร์โทรศัพท์ <span class="req">*</span></label>
+                <input type="text" id="f-phone" class="form-control" placeholder="08X-XXX-XXXX" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">อีเมล</label>
+                <input type="email" id="f-email" class="form-control" placeholder="example@email.com">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex-between">
+          <div></div>
+          <button type="button" class="btn btn-primary" onclick="nextStep(2)">ถัดไป: PDPA →</button>
+        </div>
+      </div>
+
+      <!-- Step 2: PDPA -->
+      <div class="wizard-panel" id="panel-2">
+        <div class="card mb-16">
+          <div class="card-header">
+            <span class="card-title">📄 แบบฟอร์มความยินยอม PDPA</span>
+            <span class="badge badge-accent">ส่วนที่ 1/2</span>
+          </div>
+          <div class="card-body">
+            <div class="info-box mb-16">
+              <strong>ประกาศความเป็นส่วนตัว:</strong> บริษัท โดวะ เทอร์โมเทค (ประเทศไทย) จำกัด เก็บข้อมูลส่วนบุคคลของท่านเพื่อวัตถุประสงค์ในการบริหารความปลอดภัย การควบคุมการเข้าออกพื้นที่ และการจัดทำเอกสารตามกฎหมาย ท่านมีสิทธิ์ในการเข้าถึง แก้ไข หรือขอลบข้อมูลได้ตลอดเวลา
+            </div>
+
+            <h3 class="sub"><span>ส่วนที่ 1</span> ข้อมูลส่วนบุคคลทั่วไป</h3>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;">
+              <p style="font-size:13px;color:var(--text2);margin-bottom:12px;">ข้าพเจ้ายินยอมให้บริษัทฯ เก็บรวบรวม ใช้ และเปิดเผยข้อมูลส่วนบุคคลดังนี้:</p>
+              <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;">
+                <li style="display:flex;gap:10px;align-items:start;font-size:13px;color:var(--text2);">✓ ชื่อ-นามสกุล เลขบัตรประชาชน วันเกิด สัญชาติ</li>
+                <li style="display:flex;gap:10px;align-items:start;font-size:13px;color:var(--text2);">✓ รูปถ่าย สำหรับระบุตัวตนและพิมพ์บัตร</li>
+                <li style="display:flex;gap:10px;align-items:start;font-size:13px;color:var(--text2);">✓ ประวัติการเข้าพื้นที่และ Work Permit</li>
+                <li style="display:flex;gap:10px;align-items:start;font-size:13px;color:var(--text2);">✓ ใบรับรองและประวัติการฝึกอบรม</li>
+              </ul>
+            </div>
+            <div class="form-group">
+              <label class="checkbox-item" onclick="toggleCheck(this)" id="lbl-consent1">
+                <input type="checkbox" id="cb-consent1">
+                ข้าพเจ้ายินยอมให้เก็บข้อมูลส่วนบุคคลทั่วไปตามที่ระบุข้างต้น
+              </label>
+            </div>
+
+            <h3 class="sub"><span>ส่วนที่ 2</span> ข้อมูลสุขภาพ (Sensitive Personal Data)</h3>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;">
+              <p style="font-size:13px;color:var(--text2);margin-bottom:12px;">บริษัทฯ อาจจำเป็นต้องเก็บข้อมูลสุขภาพเพื่อการประเมินความเสี่ยงในการทำงาน:</p>
+              <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;">
+                <li style="display:flex;gap:10px;align-items:start;font-size:13px;color:var(--text2);">⚕️ ผลการตรวจสุขภาพประจำปี</li>
+                <li style="display:flex;gap:10px;align-items:start;font-size:13px;color:var(--text2);">⚕️ ข้อจำกัดทางสุขภาพที่เกี่ยวข้องกับงาน</li>
+              </ul>
+            </div>
+            <div class="form-group">
+              <label class="form-label">ความยินยอมข้อมูลสุขภาพ</label>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <label class="checkbox-item" onclick="toggleRadio(this, 'health-consent', 'yes')" id="lbl-health-yes">
+                  <input type="radio" name="health-consent" value="yes"> ยินยอมให้เก็บข้อมูลสุขภาพ
+                </label>
+                <label class="checkbox-item" onclick="toggleRadio(this, 'health-consent', 'no')" id="lbl-health-no">
+                  <input type="radio" name="health-consent" value="no"> ไม่ยินยอม
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex-between">
+          <button type="button" class="btn btn-ghost" onclick="nextStep(1)">← ย้อนกลับ</button>
+          <button type="button" class="btn btn-primary" onclick="nextStep(3)">ถัดไป: ใบเซอร์ →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Certificates -->
+      <div class="wizard-panel" id="panel-3">
+        <div class="card mb-16">
+          <div class="card-header">
+            <span class="card-title">📄 ใบรับรอง (CER)</span>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="openModal('modal-cert')">➕ เพิ่มใบเซอร์</button>
+          </div>
+          <div class="card-body">
+            <div id="cert-list">
+              <div class="empty-state" style="padding:30px;">
+                <div class="empty-icon" style="font-size:24px;">📄</div>
+                <p>ยังไม่มีใบเซอร์ (สามารถเพิ่มภายหลังได้)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex-between">
+          <button type="button" class="btn btn-ghost" onclick="nextStep(2)">← ย้อนกลับ</button>
+          <button type="button" class="btn btn-primary" onclick="nextStep(4)">ถัดไป: ยืนยัน →</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Confirm -->
+      <div class="wizard-panel" id="panel-4">
+        <div class="card mb-16">
+          <div class="card-header"><span class="card-title">📋 สรุปข้อมูลการลงทะเบียน</span></div>
+          <div class="card-body" id="review-content"></div>
+        </div>
+        <div class="flex-between">
+          <button type="button" class="btn btn-ghost" onclick="nextStep(3)">← ย้อนกลับ</button>
+          <button type="button" class="btn btn-primary" onclick="submitRegistration()">✅ ยืนยันการลงทะเบียน & ออกบัตร</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Cert Modal -->
+<div class="modal-overlay" id="modal-cert">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">➕ เพิ่มใบเซอร์</span>
+      <button class="modal-close" onclick="closeModal('modal-cert')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">ประเภท</label>
+          <select id="c-type" class="form-control">
+            <option value="Safety">Safety Training</option>
+            <option value="HotWork">Hot Work</option>
+            <option value="Electrical">Electrical</option>
+            <option value="Confined">Confined Space</option>
+            <option value="Height">Working at Height</option>
+            <option value="Chemical">Chemical</option>
+            <option value="Other">อื่นๆ</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ชื่อใบเซอร์ <span class="req">*</span></label>
+          <input type="text" id="c-name" class="form-control" placeholder="ชื่อใบรับรอง">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">วันออก</label>
+          <input type="date" id="c-issued" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">วันหมดอายุ <span class="req">*</span></label>
+          <input type="date" id="c-expiry" class="form-control" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">หน่วยงานออก</label>
+        <input type="text" id="c-issuer" class="form-control" placeholder="ชื่อหน่วยงาน">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-cert')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="addCert()">เพิ่ม</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/db.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  const user = requireAuth('../index.html');
+  let currentStep = 1;
+  let pendingCerts = [];
+
+  if (user) {
+    renderSidebar('../');
+    if (!canDo(user, 'manage_contractors')) {
+      showToast('ไม่มีสิทธิ์', 'error');
+      setTimeout(() => window.location.href = 'index.html', 1500);
+    }
+    const companies = dbGetAll('contractor_companies').filter(c => c.status === 'ACTIVE');
+    const sel = document.getElementById('f-company');
+    companies.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.company_name;
+      sel.appendChild(opt);
+    });
+  }
+
+  function toggleCheck(label) {
+    const cb = label.querySelector('input[type="checkbox"]');
+    cb.checked = !cb.checked;
+    label.classList.toggle('checked', cb.checked);
+  }
+
+  function toggleRadio(label, name, value) {
+    document.querySelectorAll(`input[name="${name}"]`).forEach(r => {
+      r.parentElement.classList.remove('checked');
+    });
+    label.classList.add('checked');
+    label.querySelector('input').checked = true;
+  }
+
+  function nextStep(step) {
+    if (step > currentStep && !validateStep(currentStep)) return;
+    currentStep = step;
+    for (let i = 1; i <= 4; i++) {
+      document.getElementById(`panel-${i}`)?.classList.toggle('active', i === step);
+      const wiz = document.getElementById(`wiz-${i}`);
+      wiz.classList.remove('active','done');
+      if (i === step) wiz.classList.add('active');
+      else if (i < step) wiz.classList.add('done');
+    }
+    if (step === 4) renderReview();
+  }
+
+  function validateStep(step) {
+    if (step === 1) {
+      const required = ['f-company','f-fname','f-lname','f-national-id','f-phone'];
+      for (const id of required) {
+        if (!document.getElementById(id).value.trim()) {
+          showToast('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+          document.getElementById(id).focus();
+          return false;
+        }
+      }
+    }
+    if (step === 2) {
+      if (!document.getElementById('cb-consent1').checked) {
+        showToast('กรุณายินยอมการเก็บข้อมูลส่วนบุคคล', 'error');
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function addCert() {
+    const name = document.getElementById('c-name').value.trim();
+    const expiry = document.getElementById('c-expiry').value;
+    if (!name || !expiry) { showToast('กรุณากรอกชื่อใบเซอร์และวันหมดอายุ', 'error'); return; }
+    const days = daysUntil(expiry);
+    pendingCerts.push({
+      cert_type: document.getElementById('c-type').value,
+      cert_name: name,
+      issued_date: document.getElementById('c-issued').value,
+      expiry_date: expiry,
+      issued_by: document.getElementById('c-issuer').value,
+      status: days < 0 ? 'EXPIRED' : days <= 30 ? 'EXPIRING' : 'VALID',
+    });
+    renderCertList();
+    closeModal('modal-cert');
+    showToast('เพิ่มใบเซอร์แล้ว', 'success');
+    document.getElementById('c-name').value = '';
+    document.getElementById('c-expiry').value = '';
+    document.getElementById('c-issuer').value = '';
+  }
+
+  function renderCertList() {
+    const el = document.getElementById('cert-list');
+    if (pendingCerts.length === 0) {
+      el.innerHTML = '<div class="empty-state" style="padding:30px;"><div class="empty-icon" style="font-size:24px;">📄</div><p>ยังไม่มีใบเซอร์</p></div>';
+      return;
+    }
+    el.innerHTML = `<table class="data-table"><thead><tr><th>ประเภท</th><th>ชื่อใบเซอร์</th><th>หมดอายุ</th><th>สถานะ</th><th></th></tr></thead><tbody>
+      ${pendingCerts.map((c,i) => `<tr>
+        <td><span class="badge badge-accent">${c.cert_type}</span></td>
+        <td class="td-main">${c.cert_name}</td>
+        <td>${formatDate(c.expiry_date)}</td>
+        <td>${certBadge(c.status)}</td>
+        <td><button class="btn btn-ghost btn-sm" onclick="removeCert(${i})">✕</button></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+  }
+
+  function removeCert(i) { pendingCerts.splice(i, 1); renderCertList(); }
+
+  function renderReview() {
+    const compId = document.getElementById('f-company').value;
+    const company = dbGetById('contractor_companies', compId);
+    document.getElementById('review-content').innerHTML = `
+      <div class="detail-row">
+        <div class="detail-field"><div class="detail-label">ชื่อ-นามสกุล</div><div class="detail-value">${document.getElementById('f-fname').value} ${document.getElementById('f-lname').value}</div></div>
+        <div class="detail-field"><div class="detail-label">บริษัท</div><div class="detail-value text-accent">${company?.company_name||'-'}</div></div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-field"><div class="detail-label">เลขบัตรประชาชน</div><div class="detail-value mono">${document.getElementById('f-national-id').value}</div></div>
+        <div class="detail-field"><div class="detail-label">เบอร์โทร</div><div class="detail-value">${document.getElementById('f-phone').value}</div></div>
+      </div>
+      <hr class="divider">
+      <div class="detail-row">
+        <div class="detail-field"><div class="detail-label">PDPA Consent</div><div class="detail-value text-green">✓ ยินยอมแล้ว</div></div>
+        <div class="detail-field"><div class="detail-label">ใบเซอร์</div><div class="detail-value">${pendingCerts.length} ใบ</div></div>
+      </div>`;
+  }
+
+  function submitRegistration() {
+    const compId = document.getElementById('f-company').value;
+    const company = dbGetById('contractor_companies', compId);
+    const allContractors = dbGetAll('contractors');
+    const cardNum = `CTR-${new Date().getFullYear()}-${String(allContractors.length + 1).padStart(3,'0')}`;
+    const today = todayStr();
+    const expiry = new Date(Date.now() + 365*24*3600*1000).toISOString().slice(0,10);
+
+    const newContractor = dbInsert('contractors', {
+      company_id: compId,
+      first_name: document.getElementById('f-fname').value,
+      last_name: document.getElementById('f-lname').value,
+      national_id: document.getElementById('f-national-id').value,
+      birth_date: document.getElementById('f-birth').value,
+      nationality: document.getElementById('f-nationality').value,
+      phone: document.getElementById('f-phone').value,
+      email: document.getElementById('f-email').value,
+      photo_url: '',
+      card_number: cardNum,
+      card_issue_date: today,
+      card_expiry_date: expiry,
+      status: 'ACTIVE',
+      pdpa_consent_at: new Date().toISOString(),
+    });
+
+    // Save certs
+    pendingCerts.forEach(cert => {
+      dbInsert('contractor_certificates', { ...cert, contractor_id: newContractor.id, verified_by: user.id, verified_at: new Date().toISOString() });
+    });
+
+    // Notification
+    dbInsert('notifications', {
+      type: 'SYSTEM',
+      event: 'CONTRACTOR_REGISTERED',
+      recipient_email: document.getElementById('f-email').value || 'hr@dowa.co.th',
+      subject: `ลงทะเบียนผู้รับเหมาสำเร็จ: ${document.getElementById('f-fname').value} ${document.getElementById('f-lname').value}`,
+      ref_type: 'contractor',
+      ref_id: newContractor.id,
+      sent_at: new Date().toISOString(),
+      status: 'SENT',
+    });
+
+    showToast(`✅ ลงทะเบียนสำเร็จ! บัตรหมายเลข ${cardNum}`, 'success');
+    setTimeout(() => window.location.href = `detail.html?id=${newContractor.id}`, 1200);
+  }
+</script>
+</body>
+</html>

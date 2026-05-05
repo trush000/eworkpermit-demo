@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>การแจ้งเตือน — E-Work Permit System</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-breadcrumb"><a href="dashboard.html">Dashboard</a> /</span>
+        <span class="topbar-title">🔔 การแจ้งเตือน</span>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-ghost btn-sm" onclick="clearNotifs()">ล้างทั้งหมด</button>
+        <span id="topbar-user" class="text-sm text-muted"></span>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div class="page-header">
+        <div>
+          <h1>การแจ้งเตือนระบบ</h1>
+          <p>ประวัติเหตุการณ์และการแจ้งเตือนที่สำคัญ</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body" style="padding:0;">
+          <div id="notif-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/db.js"></script>
+<script src="js/utils.js"></script>
+<script>
+  const user = requireAuth('index.html');
+  if (user) {
+    renderSidebar('./');
+    document.getElementById('topbar-user').textContent = user.full_name;
+    renderNotifs();
+  }
+
+  function renderNotifs() {
+    const notifs = dbGetAll('notifications').sort((a,b) => new Date(b.sent_at) - new Date(a.sent_at));
+    const container = document.getElementById('notif-list');
+    
+    if (notifs.length === 0) {
+      container.innerHTML = '<div class="empty-state" style="padding:60px;"><div class="empty-icon">🔔</div><h3>ไม่มีการแจ้งเตือน</h3></div>';
+      return;
+    }
+
+    container.innerHTML = notifs.map(n => {
+      const isUnread = n.status === 'PENDING';
+      let icon = '📢';
+      if (n.event.includes('APPROVED')) icon = '✅';
+      if (n.event.includes('REJECTED')) icon = '❌';
+      if (n.event.includes('RETURNED')) icon = '🔁';
+      if (n.event.includes('SUBMITTED')) icon = '📝';
+      if (n.event.includes('EXPIRING')) icon = '⚠️';
+
+      return `
+        <div class="notif-item ${isUnread ? 'unread' : ''}" onclick="goToRef('${n.ref_type}', '${n.ref_id}', '${n.id}')">
+          <div class="notif-icon">${icon}</div>
+          <div class="notif-content">
+            <div class="notif-subject">${n.subject}</div>
+            <div class="notif-meta">${formatDateTime(n.sent_at)} · ${n.recipient_email}</div>
+          </div>
+          ${isUnread ? '<div class="unread-dot"></div>' : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  function goToRef(type, id, notifId) {
+    // Mark as read
+    dbUpdate('notifications', notifId, { status: 'SENT' });
+    
+    if (type === 'work_permit') {
+      window.location.href = `work-permits/detail.html?id=${id}`;
+    } else if (type === 'contractor') {
+      window.location.href = `contractors/detail.html?id=${id}`;
+    }
+  }
+
+  function clearNotifs() {
+    if (confirm('ยืนยันการล้างการแจ้งเตือนทั้งหมด?')) {
+      saveDB({ ...getDB(), notifications: [] });
+      renderNotifs();
+      updateNotifBadge();
+    }
+  }
+</script>
+</body>
+</html>

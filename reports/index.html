@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รายงาน — E-Work Permit System</title>
+<link rel="stylesheet" href="../css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-breadcrumb"><a href="../dashboard.html">Dashboard</a> /</span>
+        <span class="topbar-title">📈 รายงานสรุป</span>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-ghost btn-sm" onclick="exportData()">📥 Export CSV</button>
+        <span id="topbar-user" class="text-sm text-muted"></span>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div class="page-header">
+        <div>
+          <h1>รายงานและสถิติ</h1>
+          <p>ข้อมูลสรุปการปฏิบัติงานของผู้รับเหมา</p>
+        </div>
+        <div class="flex-center gap-8 no-print">
+          <select id="filter-month" class="form-control" style="width:140px;" onchange="renderReports()">
+            <option value="4">เมษายน 2568</option>
+            <option value="5" selected>พฤษภาคม 2568</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-2 gap-16">
+        <div class="card">
+          <div class="card-header"><span class="card-title">🔥❄️ ปริมาณงานแยกตามประเภท</span></div>
+          <div class="card-body">
+            <div class="chart-container"><canvas id="chart-worktype"></canvas></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">🏢 งานแยกตามบริษัท</span></div>
+          <div class="card-body">
+            <div class="chart-container"><canvas id="chart-company"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-16">
+        <div class="card-header"><span class="card-title">⚠️ สถิติปัญหาด้านความปลอดภัย (Issues)</span></div>
+        <div class="card-body">
+          <div class="chart-container" style="height:240px;"><canvas id="chart-issues"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card mt-16">
+        <div class="card-header"><span class="card-title">👷 สรุปการเข้างานผู้รับเหมา</span></div>
+        <div class="card-body" style="padding:0;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>บริษัท</th>
+                <th>จำนวนครั้งที่เข้างาน</th>
+                <th>จำนวนคนรวม</th>
+                <th>ชั่วโมงทำงานรวม</th>
+                <th>ปัญหาที่พบ</th>
+              </tr>
+            </thead>
+            <tbody id="report-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/db.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  const user = requireAuth('../index.html');
+  if (user) {
+    renderSidebar('../');
+    document.getElementById('topbar-user').textContent = user.full_name;
+    renderReports();
+  }
+
+  function renderReports() {
+    const permits = dbGetAll('work_permits');
+    const issues = dbGetAll('permit_issues');
+    const companies = dbGetAll('contractor_companies');
+
+    // Chart 1: Work Type
+    const hotCount = permits.filter(p => p.work_type === 'HOT_WORK').length;
+    const coldCount = permits.filter(p => p.work_type === 'COLD_WORK').length;
+    
+    new Chart(document.getElementById('chart-worktype'), {
+      type: 'pie',
+      data: {
+        labels: ['Hot Work', 'Cold Work'],
+        datasets: [{
+          data: [hotCount, coldCount],
+          backgroundColor: ['#ff4757', '#00d4ff']
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    // Chart 2: Company Workload
+    const companyData = companies.map(c => {
+      return {
+        name: c.company_name,
+        count: permits.filter(p => p.contractor_company_id === c.id).length
+      };
+    });
+
+    new Chart(document.getElementById('chart-company'), {
+      type: 'bar',
+      data: {
+        labels: companyData.map(d => d.name.substring(0, 15) + '...'),
+        datasets: [{
+          label: 'จำนวน Permit',
+          data: companyData.map(d => d.count),
+          backgroundColor: '#a855f7'
+        }]
+      },
+      options: { 
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    // Chart 3: Issues Trend (Simulated)
+    new Chart(document.getElementById('chart-issues'), {
+      type: 'line',
+      data: {
+        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+        datasets: [{
+          label: 'จำนวนปัญหาที่พบ',
+          data: [2, 5, 3, 1],
+          borderColor: '#ff9f43',
+          tension: 0.4,
+          fill: true,
+          backgroundColor: 'rgba(255,159,67,0.1)'
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    // Table
+    const tableBody = document.getElementById('report-table');
+    tableBody.innerHTML = companies.map(c => {
+      const cPermits = permits.filter(p => p.contractor_company_id === c.id);
+      const cIssues = issues.filter(i => cPermits.find(p => p.id === i.permit_id));
+      const totalWorkers = cPermits.reduce((sum, p) => sum + (p.worker_count || 0), 0);
+      
+      return `
+        <tr>
+          <td class="td-main">${c.company_name}</td>
+          <td style="text-align:center;">${cPermits.length}</td>
+          <td style="text-align:center;">${totalWorkers}</td>
+          <td style="text-align:center;">${cPermits.length * 8}</td>
+          <td style="text-align:center;">${cIssues.length > 0 ? `<span class="text-red font-bold">${cIssues.length}</span>` : '0'}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function exportData() {
+    const permits = dbGetAll('work_permits');
+    const columns = [
+      { label: 'ID', key: 'permit_code' },
+      { label: 'Company', key: 'contractor_company_name' },
+      { label: 'Area', key: 'work_area' },
+      { label: 'Status', key: 'status' },
+      { label: 'Date', key: 'start_date' }
+    ];
+    exportToCSV(permits, 'eworkpermit_report.csv', columns);
+  }
+</script>
+</body>
+</html>

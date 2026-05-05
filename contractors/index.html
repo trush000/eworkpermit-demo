@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ผู้รับเหมา — E-Work Permit System</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-breadcrumb"><a href="../dashboard.html">Dashboard</a> /</span>
+        <span class="topbar-title">👷 ผู้รับเหมา</span>
+      </div>
+      <div class="topbar-right">
+        <span id="topbar-user" class="text-sm text-muted"></span>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div class="page-header">
+        <div>
+          <h1>ทะเบียนผู้รับเหมา</h1>
+          <p>ค้นหา ดูสถานะ และจัดการข้อมูลผู้รับเหมา</p>
+        </div>
+        <div class="flex-center gap-8">
+          <button class="btn btn-ghost btn-sm" onclick="exportContractors()">📥 Export</button>
+          <a href="register.html" class="btn btn-primary" id="btn-register" style="display:none;">➕ ลงทะเบียนใหม่</a>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid mb-16" id="mini-stats"></div>
+
+      <!-- Filters -->
+      <div class="card mb-16">
+        <div class="card-body" style="padding:16px;">
+          <div class="filter-bar">
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="inp-search" placeholder="ค้นหาชื่อ, เลขบัตร..." oninput="renderTable()">
+            </div>
+            <select class="filter-select" id="sel-status" onchange="renderTable()">
+              <option value="">ทุกสถานะ</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+              <option value="BLACKLIST">Blacklist</option>
+            </select>
+            <select class="filter-select" id="sel-company" onchange="renderTable()">
+              <option value="">ทุกบริษัท</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="clearFilters()">✕ ล้าง</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="card">
+        <div class="card-body" style="padding:0;">
+          <div class="table-wrap" id="table-wrap"></div>
+          <div id="pagination"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/db.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  const user = requireAuth('../index.html');
+  let currentPage = 1;
+  const PER_PAGE = 10;
+  let allContractors = [];
+
+  if (user) {
+    renderSidebar('../');
+    document.getElementById('topbar-user').textContent = user.full_name;
+    if (canDo(user, 'manage_contractors')) {
+      document.getElementById('btn-register').style.display = '';
+    }
+
+    const companies = dbGetAll('contractor_companies');
+    const selComp = document.getElementById('sel-company');
+    companies.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.company_name;
+      selComp.appendChild(opt);
+    });
+
+    loadData();
+  }
+
+  function loadData() {
+    allContractors = dbGetAll('contractors');
+    const certs = dbGetAll('contractor_certificates');
+    const companies = dbGetAll('contractor_companies');
+
+    // Annotate with company name and cert status
+    allContractors = allContractors.map(c => {
+      const comp = companies.find(cc => cc.id === c.company_id);
+      const contractorCerts = certs.filter(cert => cert.contractor_id === c.id);
+      const hasExpired = contractorCerts.some(cert => cert.status === 'EXPIRED');
+      const hasExpiring = contractorCerts.some(cert => cert.status === 'EXPIRING');
+      const cardDays = daysUntil(c.card_expiry_date);
+      return {
+        ...c,
+        company_name: comp?.company_name || '-',
+        cert_count: contractorCerts.length,
+        cert_alert: hasExpired ? 'expired' : hasExpiring ? 'expiring' : 'ok',
+        card_days: cardDays,
+      };
+    });
+
+    // Stats
+    document.getElementById('mini-stats').innerHTML = `
+      <div class="stat-card c-green" style="padding:14px;">
+        <div class="stat-label">Active</div>
+        <div class="stat-value" style="font-size:22px;">${allContractors.filter(c=>c.status==='ACTIVE').length}</div>
+      </div>
+      <div class="stat-card c-accent" style="padding:14px;">
+        <div class="stat-label">Inactive</div>
+        <div class="stat-value" style="font-size:22px;">${allContractors.filter(c=>c.status==='INACTIVE').length}</div>
+      </div>
+      <div class="stat-card c-red" style="padding:14px;">
+        <div class="stat-label">Blacklist</div>
+        <div class="stat-value" style="font-size:22px;">${allContractors.filter(c=>c.status==='BLACKLIST').length}</div>
+      </div>
+      <div class="stat-card c-gold" style="padding:14px;">
+        <div class="stat-label">บัตรใกล้หมดอายุ</div>
+        <div class="stat-value" style="font-size:22px;">${allContractors.filter(c=>c.card_days!==null&&c.card_days<=30&&c.card_days>=0).length}</div>
+      </div>`;
+
+    renderTable();
+  }
+
+  function getFiltered() {
+    const q = document.getElementById('inp-search').value;
+    const status = document.getElementById('sel-status').value;
+    const company = document.getElementById('sel-company').value;
+    let data = allContractors;
+    if (q) data = filterTable(data, q, ['first_name','last_name','card_number','national_id']);
+    if (status) data = data.filter(c => c.status === status);
+    if (company) data = data.filter(c => c.company_id === company);
+    return data;
+  }
+
+  function renderTable() {
+    const filtered = getFiltered();
+    const paged = paginate(filtered, currentPage, PER_PAGE);
+
+    if (paged.items.length === 0) {
+      document.getElementById('table-wrap').innerHTML = '<div class="empty-state"><div class="empty-icon">👷</div><h3>ไม่พบข้อมูล</h3></div>';
+      document.getElementById('pagination').innerHTML = '';
+      return;
+    }
+
+    document.getElementById('table-wrap').innerHTML = `
+      <table class="data-table">
+        <thead><tr>
+          <th>ชื่อ-นามสกุล</th>
+          <th>บริษัท</th>
+          <th>เลขบัตรผู้รับเหมา</th>
+          <th>หมดอายุบัตร</th>
+          <th>ใบเซอร์</th>
+          <th>PDPA</th>
+          <th>สถานะ</th>
+          <th>จัดการ</th>
+        </tr></thead>
+        <tbody>${paged.items.map(c => `
+          <tr>
+            <td class="td-main">${c.first_name} ${c.last_name}</td>
+            <td>${c.company_name}</td>
+            <td class="td-mono">${c.card_number || '-'}</td>
+            <td>
+              ${c.card_expiry_date ? `<span>${formatDate(c.card_expiry_date)}</span>
+              ${c.card_days !== null && c.card_days <= 30 ? `<br><span class="badge ${c.card_days < 0 ? 'badge-expired' : 'badge-expiring'} mt-4">${daysLabel(c.card_expiry_date)}</span>` : ''}` : '-'}
+            </td>
+            <td>
+              <span class="badge ${c.cert_alert === 'expired' ? 'badge-expired' : c.cert_alert === 'expiring' ? 'badge-expiring' : 'badge-valid'}">${c.cert_count} ใบ</span>
+            </td>
+            <td>${c.pdpa_consent_at ? '<span class="badge badge-valid">✓ ยินยอม</span>' : '<span class="badge badge-inactive">ยังไม่ยินยอม</span>'}</td>
+            <td>${contractorBadge(c.status)}</td>
+            <td>
+              <div class="td-actions">
+                <a href="detail.html?id=${c.id}" class="btn btn-ghost btn-sm">👁 ดู</a>
+                ${canDo(user,'manage_contractors') ? `<button class="btn btn-ghost btn-sm" onclick="quickStatus('${c.id}', '${c.status}')">⚙️</button>` : ''}
+              </div>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+
+    renderPagination('pagination', paged, 'goPage');
+  }
+
+  window.goPage = function(p) { currentPage = p; renderTable(); };
+
+  function clearFilters() {
+    document.getElementById('inp-search').value = '';
+    document.getElementById('sel-status').value = '';
+    document.getElementById('sel-company').value = '';
+    currentPage = 1;
+    renderTable();
+  }
+
+  function quickStatus(id, currentStatus) {
+    const statuses = ['ACTIVE', 'INACTIVE', 'BLACKLIST'];
+    const next = statuses[(statuses.indexOf(currentStatus) + 1) % statuses.length];
+    confirmAction(`เปลี่ยนสถานะเป็น "${next}"?`, () => {
+      dbUpdate('contractors', id, { status: next });
+      loadData();
+      showToast(`อัพเดทสถานะเป็น ${next}`, 'success');
+    });
+  }
+
+  function exportContractors() {
+    exportToCSV(getFiltered(), 'contractors.csv', [
+      { key: 'first_name', label: 'ชื่อ' },
+      { key: 'last_name', label: 'นามสกุล' },
+      { key: 'company_name', label: 'บริษัท' },
+      { key: 'card_number', label: 'เลขบัตร' },
+      { key: 'card_expiry_date', label: 'หมดอายุบัตร' },
+      { key: 'status', label: 'สถานะ' },
+    ]);
+  }
+</script>
+</body>
+</html>
