@@ -122,43 +122,42 @@ function certBadge(status) {
 // ===== Sidebar Active Link =====
 function setActiveNav() {
   const currentUrl = window.location.href.split('?')[0].split('#')[0].toLowerCase();
+  const navItems = document.querySelectorAll('.nav-item');
   
-  document.querySelectorAll('.nav-item').forEach(item => {
-    // Resolve absolute URL from the property (item.href is always absolute)
+  let bestMatch = null;
+  let matchType = 0; // 0: none, 1: folder, 2: exact
+
+  navItems.forEach(item => {
+    item.classList.remove('active');
     const itemUrl = item.href ? item.href.split('?')[0].split('#')[0].toLowerCase() : '';
     
-    if (!itemUrl || itemUrl.includes('javascript:')) {
-      item.classList.remove('active');
-      return;
-    }
+    if (!itemUrl || itemUrl.includes('javascript:')) return;
 
-    let isMatched = (currentUrl === itemUrl);
-
-    // Folder-based matching for sub-pages (e.g., detail.html should highlight index.html)
-    if (!isMatched) {
-      // Check if we are in the same directory as the menu item
+    // Exact Match (Highest Priority)
+    if (currentUrl === itemUrl) {
+      bestMatch = item;
+      matchType = 2;
+    } 
+    // Folder Match (Lower Priority, only if no exact match found yet)
+    else if (matchType < 2) {
       const itemFolder = itemUrl.substring(0, itemUrl.lastIndexOf('/') + 1);
-      const currentFolder = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
-      
-      // If the menu item is an 'index' page for a module, highlight it if we are in that module's folder
-      if (itemUrl.endsWith('/index.html') || itemUrl.endsWith('/')) {
-        if (currentUrl.includes(itemFolder) && !itemUrl.endsWith('/dashboard.html')) {
-          isMatched = true;
-        }
+      if ((itemUrl.endsWith('/index.html') || itemUrl.endsWith('/')) && 
+          currentUrl.includes(itemFolder) && 
+          !itemUrl.endsWith('/dashboard.html')) {
+        bestMatch = item;
+        matchType = 1;
       }
     }
-
-    // Special case for dashboard (don't highlight it for everything)
-    if (itemUrl.endsWith('/dashboard.html') && !currentUrl.endsWith('/dashboard.html')) {
-      isMatched = false;
-    }
-
-    if (isMatched) {
-      item.classList.add('active');
-    } else {
-      item.classList.remove('active');
-    }
   });
+
+  // Special case for dashboard
+  if (bestMatch && bestMatch.href.endsWith('/dashboard.html') && !currentUrl.endsWith('/dashboard.html')) {
+    bestMatch = null;
+  }
+
+  if (bestMatch) {
+    bestMatch.classList.add('active');
+  }
 }
 
 // ===== Render Sidebar =====
