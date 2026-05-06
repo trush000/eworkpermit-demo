@@ -121,28 +121,36 @@ function certBadge(status) {
 
 // ===== Sidebar Active Link =====
 function setActiveNav() {
-  const path = window.location.pathname.toLowerCase();
+  const currentUrl = window.location.href.split('?')[0].split('#')[0].toLowerCase();
   
   document.querySelectorAll('.nav-item').forEach(item => {
-    const href = item.getAttribute('href');
-    if (!href || href.startsWith('javascript')) {
+    // Resolve absolute URL from the property (item.href is always absolute)
+    const itemUrl = item.href ? item.href.split('?')[0].split('#')[0].toLowerCase() : '';
+    
+    if (!itemUrl || itemUrl.includes('javascript:')) {
       item.classList.remove('active');
       return;
     }
 
-    // Normalize href to handle ../ and current directory
-    const tempAnchor = document.createElement('a');
-    tempAnchor.href = href;
-    const normalizedHref = tempAnchor.pathname.toLowerCase();
+    let isMatched = (currentUrl === itemUrl);
 
-    let isMatched = (path === normalizedHref);
-
-    // Folder-based matching for sub-pages
+    // Folder-based matching for sub-pages (e.g., detail.html should highlight index.html)
     if (!isMatched) {
-      if (path.includes('/work-permits/') && normalizedHref.includes('/work-permits/index.html')) isMatched = true;
-      if (path.includes('/contractors/') && normalizedHref.includes('/contractors/')) isMatched = true;
-      if (path.includes('/admin/') && normalizedHref.includes('/admin/')) isMatched = true;
-      if (path.includes('/reports/') && normalizedHref.includes('/reports/')) isMatched = true;
+      // Check if we are in the same directory as the menu item
+      const itemFolder = itemUrl.substring(0, itemUrl.lastIndexOf('/') + 1);
+      const currentFolder = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+      
+      // If the menu item is an 'index' page for a module, highlight it if we are in that module's folder
+      if (itemUrl.endsWith('/index.html') || itemUrl.endsWith('/')) {
+        if (currentUrl.includes(itemFolder) && !itemUrl.endsWith('/dashboard.html')) {
+          isMatched = true;
+        }
+      }
+    }
+
+    // Special case for dashboard (don't highlight it for everything)
+    if (itemUrl.endsWith('/dashboard.html') && !currentUrl.endsWith('/dashboard.html')) {
+      isMatched = false;
     }
 
     if (isMatched) {
