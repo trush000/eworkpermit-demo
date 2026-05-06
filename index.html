@@ -194,6 +194,27 @@
   document.getElementById('inp-password').addEventListener('keydown', e => {
     if (e.key === 'Enter') doLogin();
   });
+
+  // Dynamically update demo role names from DB
+  function initDemoRoles() {
+    const users = dbGetAll('users');
+    const roleButtons = document.querySelectorAll('.demo-role-btn');
+    roleButtons.forEach(btn => {
+      const onclick = btn.getAttribute('onclick');
+      const emailMatch = onclick.match(/'([^']+)'/);
+      if (emailMatch) {
+        const email = emailMatch[1];
+        const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+        if (user) {
+          const descSpan = btn.querySelector('.role-desc');
+          if (descSpan) {
+            descSpan.textContent = `${user.full_name} (${user.department})`;
+          }
+        }
+      }
+    });
+  }
+  initDemoRoles();
 </script>
 </body>
 </html>
