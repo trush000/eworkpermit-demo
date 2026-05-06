@@ -3,13 +3,13 @@ const DB_KEY = 'ewp_db';
 
 const SEED_DATA = {
   users: [
-    { id: 'u1', employee_id: 'EMP001', full_name: 'นายนัฐวุฒิ หาแพง (Natthawut Hapang)', email: 'natthawut@dowa-tht.co.th', role: 'ADMIN', department: 'IT', phone: '081-111-1111', is_active: true, last_login_at: null, password: 'admin123' },
-    { id: 'u2', employee_id: 'EMP002', full_name: 'นางสาวกานมณี หวานฤดี (Karnmanee Wanruedee)', email: 'karnmanee@dowa-tht.co.th', role: 'HR_MGR', department: 'HR', phone: '081-222-2222', is_active: true, last_login_at: null, password: 'hr123' },
-    { id: 'u3', employee_id: 'EMP003', full_name: 'นางสาววาสนา พงษ์ศาวิพาพัตน์ (Wassana Pongsawipawat)', email: 'wassana@dowa-tht.co.th', role: 'SAFETY', department: 'HR', phone: '081-333-3333', is_active: true, last_login_at: null, password: 'safety123' },
-    { id: 'u4', employee_id: 'EMP004', full_name: 'นายอภิสิทธิ์ ต้นกันยา (Aphisit Tonkanya)', email: 'aphisit@dowa-tht.co.th', role: 'SAFETY', department: 'HR', phone: '081-444-4444', is_active: true, last_login_at: null, password: 'safety123' },
-    { id: 'u5', employee_id: 'EMP005', full_name: 'นายสมชาย รักษาชาติ (Area Owner)', email: 'area@dowa.co.th', role: 'AREA_OWNER', department: 'Maintenance', phone: '081-555-5555', is_active: true, last_login_at: null, password: 'area123' },
-    { id: 'u6', employee_id: 'EMP006', full_name: 'นายสมศักดิ์ รักษาความปลอดภัย (Security)', email: 'security@dowa-tht.co.th', role: 'GUARD', department: 'Security', phone: '081-666-6666', is_active: true, last_login_at: null, password: 'guard123' },
-    { id: 'u7', employee_id: 'EMP007', full_name: 'นายวิชัย ตันติวัฒน์ (Work Owner)', email: 'owner@dowa.co.th', role: 'WORK_OWNER', department: 'Production', phone: '081-777-7777', is_active: true, last_login_at: null, password: 'owner123' },
+    { id: 'u1', employee_id: 'EMP001', full_name: 'นายณัฐวุฒิ หาแพง', email: 'natthawut@dowa-tht.co.th', role: 'ADMIN', department: 'IT', phone: '081-111-1111', is_active: true, last_login_at: null, password: 'admin123' },
+    { id: 'u2', employee_id: 'EMP002', full_name: 'นางสาวกานมณี หวานฤดี', email: 'karnmanee@dowa-tht.co.th', role: 'HR_MGR', department: 'HR', phone: '081-222-2222', is_active: true, last_login_at: null, password: 'hr123' },
+    { id: 'u3', employee_id: 'EMP003', full_name: 'นางสาววาสนา พงษ์ศาวิพาพัตน์', email: 'wassana@dowa-tht.co.th', role: 'SAFETY', department: 'HR', phone: '081-333-3333', is_active: true, last_login_at: null, password: 'safety123' },
+    { id: 'u4', employee_id: 'EMP004', full_name: 'นายอภิสิทธิ์ ต้นกันยา', email: 'aphisit@dowa-tht.co.th', role: 'SAFETY', department: 'HR', phone: '081-444-4444', is_active: true, last_login_at: null, password: 'safety123' },
+    { id: 'u5', employee_id: 'EMP005', full_name: 'นายอรรถพล สายทรัพย์', email: 'attapon@dowa-tht.co.th', role: 'AREA_OWNER', department: 'Production', phone: '081-555-5555', is_active: true, last_login_at: null, password: 'area123' },
+    { id: 'u6', employee_id: 'EMP006', full_name: 'นายสมศักดิ์ รักษาความปลอดภัย', email: 'security@dowa-tht.co.th', role: 'GUARD', department: 'Security', phone: '081-666-6666', is_active: true, last_login_at: null, password: 'guard123' },
+    { id: 'u7', employee_id: 'EMP007', full_name: 'นายเลิศมงคล กลิ่นพิมาย', email: 'lerdmongkon@dowa-tht.co.th', role: 'WORK_OWNER', department: 'Maintenance', phone: '081-777-7777', is_active: true, last_login_at: null, password: 'owner123' },
   ],
   contractor_companies: [
     { id: 'cc1', company_name: 'บริษัท เอ็มที เซอร์วิส จำกัด', tax_id: '0105555001234', contact_name: 'นายมนตรี ท่าน้ำ', contact_phone: '02-123-4567', contact_email: 'mt@mtservice.co.th', contract_start: '2025-01-01', contract_end: '2026-12-31', status: 'ACTIVE', created_at: '2025-01-01' },
