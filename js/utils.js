@@ -122,22 +122,28 @@ function certBadge(status) {
 // ===== Sidebar Active Link =====
 function setActiveNav() {
   const path = window.location.pathname.toLowerCase();
-  const page = path.split('/').pop() || 'index.html';
   
   document.querySelectorAll('.nav-item').forEach(item => {
-    const href = (item.getAttribute('href') || '').toLowerCase();
-    if (!href) return;
-    
-    const itemPage = href.split('/').pop();
-    
-    // Exact page match
-    let isMatched = (page === itemPage);
-    
-    // Sub-folder matching (e.g. if in work-permits/detail, highlight work-permits/index)
-    if (!isMatched && path.includes('/work-permits/') && href.includes('work-permits/index')) isMatched = true;
-    if (!isMatched && path.includes('/contractors/') && href.includes('contractors/index')) isMatched = true;
-    if (!isMatched && path.includes('/admin/') && href.includes('admin/')) isMatched = true;
-    if (!isMatched && path.includes('/reports/') && href.includes('reports/')) isMatched = true;
+    const href = item.getAttribute('href');
+    if (!href || href.startsWith('javascript')) {
+      item.classList.remove('active');
+      return;
+    }
+
+    // Normalize href to handle ../ and current directory
+    const tempAnchor = document.createElement('a');
+    tempAnchor.href = href;
+    const normalizedHref = tempAnchor.pathname.toLowerCase();
+
+    let isMatched = (path === normalizedHref);
+
+    // Folder-based matching for sub-pages
+    if (!isMatched) {
+      if (path.includes('/work-permits/') && normalizedHref.includes('/work-permits/index.html')) isMatched = true;
+      if (path.includes('/contractors/') && normalizedHref.includes('/contractors/')) isMatched = true;
+      if (path.includes('/admin/') && normalizedHref.includes('/admin/')) isMatched = true;
+      if (path.includes('/reports/') && normalizedHref.includes('/reports/')) isMatched = true;
+    }
 
     if (isMatched) {
       item.classList.add('active');
