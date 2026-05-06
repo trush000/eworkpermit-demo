@@ -197,6 +197,17 @@
 
     if (editId) {
       dbUpdate('users', editId, data);
+      
+      // If editing own profile, sync session
+      const currentUser = getCurrentUser();
+      if (currentUser && currentUser.id === editId) {
+        const updated = dbGetById('users', editId);
+        if (updated) {
+          const { password: _, ...safeUser } = updated;
+          localStorage.setItem('ewp_user', JSON.stringify(safeUser));
+        }
+      }
+      
       showToast('อัพเดทผู้ใช้งานสำเร็จ', 'success');
     } else {
       if (!pass) { showToast('กรุณากำหนดรหัสผ่าน', 'error'); return; }
@@ -205,6 +216,9 @@
     }
     closeModal('modal-user');
     renderUsersTable();
+    // Re-render sidebar/topbar if self was edited
+    const updatedUser = getCurrentUser();
+    if (updatedUser) renderSidebar('../'); 
   }
 
   function toggleActive(id, current) {

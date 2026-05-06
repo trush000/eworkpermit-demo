@@ -197,24 +197,39 @@
 
   // Dynamically update demo role names from DB
   function initDemoRoles() {
-    const users = dbGetAll('users');
-    const roleButtons = document.querySelectorAll('.demo-role-btn');
-    roleButtons.forEach(btn => {
-      const onclick = btn.getAttribute('onclick');
-      const emailMatch = onclick.match(/'([^']+)'/);
-      if (emailMatch) {
-        const email = emailMatch[1];
-        const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-        if (user) {
-          const descSpan = btn.querySelector('.role-desc');
-          if (descSpan) {
-            descSpan.textContent = `${user.full_name} (${user.department})`;
+    try {
+      const users = dbGetAll('users');
+      console.log('Syncing demo roles with DB users:', users.length);
+      
+      const roleButtons = document.querySelectorAll('.demo-role-btn');
+      roleButtons.forEach(btn => {
+        const onclick = btn.getAttribute('onclick');
+        const emailMatch = onclick.match(/'([^']+)'/);
+        if (emailMatch) {
+          const email = emailMatch[1].toLowerCase();
+          const user = users.find(u => u.email.toLowerCase() === email);
+          if (user) {
+            const descSpan = btn.querySelector('.role-desc');
+            if (descSpan) {
+              // Format name to be cleaner if it's very long
+              let displayName = user.full_name;
+              if (displayName.includes('(')) {
+                // Keep only the part before parenthesis for demo buttons to save space
+                displayName = displayName.split('(')[0].trim();
+              }
+              descSpan.textContent = `${displayName} (${user.department})`;
+            }
           }
         }
-      }
-    });
+      });
+    } catch (e) {
+      console.error('Error initDemoRoles:', e);
+    }
   }
+  
+  // Call immediately and also after a short delay to ensure DB is ready
   initDemoRoles();
+  setTimeout(initDemoRoles, 500);
 </script>
 </body>
 </html>
