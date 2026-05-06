@@ -118,7 +118,6 @@
       { label: 'จัดการ Contractor', admin: true, safety: true, work_owner: false, area_owner: false, hr: true, guard: false },
       { label: 'ออกบัตรผู้รับเหมา', admin: true, safety: false, work_owner: false, area_owner: false, hr: true, guard: false },
       { label: 'ดู Dashboard & Reports', admin: true, safety: true, work_owner: false, area_owner: false, hr: true, guard: false },
-      { label: 'สแกน QR บัตรผู้รับเหมา', admin: true, safety: true, work_owner: false, area_owner: false, hr: false, guard: true },
       { label: 'จัดการผู้ใช้งาน', admin: true, safety: false, work_owner: false, area_owner: false, hr: false, guard: false },
     ];
 
@@ -145,7 +144,8 @@
             <td>
               <div class="td-actions">
                 <button class="btn btn-ghost btn-sm" onclick="editUser('${u.id}')">✏️</button>
-                ${u.id !== user.id ? `<button class="btn btn-ghost btn-sm" onclick="toggleActive('${u.id}',${u.is_active})">⚙️</button>` : '<span class="text-xs text-muted">(ตัวคุณ)</span>'}
+                <button class="btn btn-ghost btn-sm" onclick="toggleActive('${u.id}',${u.is_active})">⚙️</button>
+                ${u.id !== user.id ? `<button class="btn btn-ghost btn-sm text-red" onclick="deleteUser('${u.id}', '${u.full_name}')">🗑️</button>` : '<span class="text-xs text-muted">(ตัวคุณ)</span>'}
               </div>
             </td>
           </tr>`).join('')}
@@ -211,6 +211,13 @@
     dbUpdate('users', id, { is_active: !current });
     showToast(`เปลี่ยนสถานะเป็น ${!current ? 'Active' : 'Inactive'}`, 'success');
     renderUsersTable();
+  }
+  function deleteUser(id, name) {
+    confirmAction(`คุณแน่ใจหรือไม่ว่าต้องการลบผู้ใช้งาน <strong>${name}</strong>? การดำเนินการนี้ไม่สามารถย้อนกลับได้`, () => {
+      dbDelete('users', id);
+      showToast('ลบผู้ใช้งานเรียบร้อยแล้ว', 'success');
+      renderUsersTable();
+    });
   }
 </script>
 </body>

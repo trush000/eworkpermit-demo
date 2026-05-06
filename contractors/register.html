@@ -19,7 +19,7 @@
 
     <div class="page-content">
       <div class="page-header">
-        <div><h1>ลงทะเบียนผู้รับเหมาใหม่</h1><p>กรอกข้อมูลและยืนยัน PDPA ก่อนออกบัตร</p></div>
+        <div><h1 id="page-h1">ลงทะเบียนผู้รับเหมาใหม่</h1><p id="page-p">กรอกข้อมูลและยืนยัน PDPA ก่อนออกบัตร</p></div>
         <a href="index.html" class="btn btn-ghost">← กลับ</a>
       </div>
 
@@ -253,6 +253,41 @@
       opt.textContent = c.company_name;
       sel.appendChild(opt);
     });
+
+    // Check for Edit ID
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('id');
+    if (editId) {
+      loadEditData(editId);
+    }
+  }
+
+  let editingId = null;
+  function loadEditData(id) {
+    const c = dbGetById('contractors', id);
+    if (!c) return;
+    editingId = id;
+    document.getElementById('page-h1').textContent = 'แก้ไขข้อมูลผู้รับเหมา';
+    document.getElementById('page-p').textContent = `แก้ไขข้อมูลของ ${c.first_name} ${c.last_name}`;
+    
+    document.getElementById('f-company').value = c.company_id;
+    document.getElementById('f-fname').value = c.first_name;
+    document.getElementById('f-lname').value = c.last_name;
+    document.getElementById('f-national-id').value = c.national_id;
+    document.getElementById('f-birth').value = c.birth_date;
+    document.getElementById('f-nationality').value = c.nationality;
+    document.getElementById('f-phone').value = c.phone;
+    document.getElementById('f-email').value = c.email;
+
+    if (c.pdpa_consent_at) {
+      const cb = document.getElementById('cb-consent1');
+      cb.checked = true;
+      document.getElementById('lbl-consent1').classList.add('checked');
+    }
+
+    // Load certs
+    pendingCerts = dbGetAll('contractor_certificates').filter(cert => cert.contractor_id === id);
+    renderCertList();
   }
 
   function toggleCheck(label) {
@@ -363,13 +398,10 @@
 
   function submitRegistration() {
     const compId = document.getElementById('f-company').value;
-    const company = dbGetById('contractor_companies', compId);
     const allContractors = dbGetAll('contractors');
-    const cardNum = `CTR-${new Date().getFullYear()}-${String(allContractors.length + 1).padStart(3,'0')}`;
     const today = todayStr();
-    const expiry = new Date(Date.now() + 365*24*3600*1000).toISOString().slice(0,10);
-
-    const newContractor = dbInsert('contractors', {
+    
+    const data = {
       company_id: compId,
       first_name: document.getElementById('f-fname').value,
       last_name: document.getElementById('f-lname').value,
@@ -378,33 +410,33 @@
       nationality: document.getElementById('f-nationality').value,
       phone: document.getElementById('f-phone').value,
       email: document.getElementById('f-email').value,
-      photo_url: '',
-      card_number: cardNum,
-      card_issue_date: today,
-      card_expiry_date: expiry,
-      status: 'ACTIVE',
       pdpa_consent_at: new Date().toISOString(),
-    });
+    };
+
+    let savedContractor;
+    if (editingId) {
+      savedContractor = dbUpdate('contractors', editingId, data);
+      // Clean up old certs before re-saving (for simplicity in demo)
+      const allCerts = dbGetAll('contractor_certificates').filter(cert => cert.contractor_id !== editingId);
+      dbSaveTable('contractor_certificates', allCerts);
+    } else {
+      const cardNum = `CTR-${new Date().getFullYear()}-${String(allContractors.length + 1).padStart(3,'0')}`;
+      const expiry = new Date(Date.now() + 365*24*3600*1000).toISOString().slice(0,10);
+      data.card_number = cardNum;
+      data.card_issue_date = today;
+      data.card_expiry_date = expiry;
+      data.status = 'ACTIVE';
+      data.photo_url = '';
+      savedContractor = dbInsert('contractors', data);
+    }
 
     // Save certs
     pendingCerts.forEach(cert => {
-      dbInsert('contractor_certificates', { ...cert, contractor_id: newContractor.id, verified_by: user.id, verified_at: new Date().toISOString() });
+      dbInsert('contractor_certificates', { ...cert, contractor_id: savedContractor.id, verified_by: user.id, verified_at: new Date().toISOString() });
     });
 
-    // Notification
-    dbInsert('notifications', {
-      type: 'SYSTEM',
-      event: 'CONTRACTOR_REGISTERED',
-      recipient_email: document.getElementById('f-email').value || 'hr@dowa.co.th',
-      subject: `ลงทะเบียนผู้รับเหมาสำเร็จ: ${document.getElementById('f-fname').value} ${document.getElementById('f-lname').value}`,
-      ref_type: 'contractor',
-      ref_id: newContractor.id,
-      sent_at: new Date().toISOString(),
-      status: 'SENT',
-    });
-
-    showToast(`✅ ลงทะเบียนสำเร็จ! บัตรหมายเลข ${cardNum}`, 'success');
-    setTimeout(() => window.location.href = `detail.html?id=${newContractor.id}`, 1200);
+    showToast(editingId ? '✅ อัพเดทข้อมูลสำเร็จ' : '✅ ลงทะเบียนสำเร็จ!', 'success');
+    setTimeout(() => window.location.href = `detail.html?id=${savedContractor.id}`, 1200);
   }
 </script>
 </body>

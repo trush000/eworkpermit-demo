@@ -36,9 +36,33 @@
   .ppe-item.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
   .ppe-item .icon { font-size: 20px; display: block; margin-bottom: 4px; }
 
-  .review-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .review-table th, .review-table td { padding: 8px; border: 1px solid var(--border); text-align: left; }
-  .review-table th { background: var(--bg3); color: var(--text3); font-weight: 600; width: 30%; }
+  .review-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 20px; }
+  .review-table th, .review-table td { padding: 12px; border: 1px solid var(--border); text-align: left; }
+  .review-table th { background: var(--bg3); color: var(--text2); font-weight: 600; width: 30%; }
+  
+  .signature-pad-container {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    position: relative;
+    width: 100%;
+    height: 180px;
+    margin-top: 10px;
+  }
+  .signature-pad-container canvas { width: 100%; height: 100%; cursor: crosshair; }
+  .signature-pad-controls { position: absolute; top: 10px; right: 10px; display: flex; gap: 8px; }
+
+  .worker-tag {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .worker-tag img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: var(--border); }
 </style>
 </head>
 <body>
@@ -142,18 +166,27 @@
               <div class="card-header"><span class="card-title">🔥 ประเภทงานความเสี่ยงสูง</span></div>
               <div class="card-body">
                 <div class="type-selection">
-                  <div class="type-card" id="type-hot" onclick="selectType('HOT_WORK')">
+                  <div class="type-card" id="type-hot" onclick="toggleMainType('HOT_WORK')">
                     <span class="icon">🔥</span>
                     <span class="label">Hot Work (งานร้อน)</span>
                     <p class="text-xs text-muted mt-4">งานที่เกิดความร้อนหรือประกายไฟ เช่น เชื่อม, ตัดโลหะ</p>
                   </div>
-                  <div class="type-card" id="type-cold" onclick="selectType('COLD_WORK')">
+                  <div class="type-card" id="type-cold" onclick="toggleMainType('COLD_WORK')">
                     <span class="icon">❄️</span>
                     <span class="label">Cold Work (งานทั่วไป)</span>
                     <p class="text-xs text-muted mt-4">งานซ่อมบำรุงทั่วไปที่ไม่มีประกายไฟ</p>
                   </div>
                 </div>
-                <div id="sub-types" class="grid-2 gap-8 mb-16"></div>
+                <div id="sub-types-container" class="grid-2 gap-24 mb-16">
+                  <div id="hot-subs" style="display:none;">
+                    <p class="text-xs font-bold mb-8 text-accent">ลักษณะงานร้อน:</p>
+                    <div id="hot-subs-list" class="grid-1 gap-8"></div>
+                  </div>
+                  <div id="cold-subs" style="display:none;">
+                    <p class="text-xs font-bold mb-8 text-blue">ลักษณะงานทั่วไป:</p>
+                    <div id="cold-subs-list" class="grid-1 gap-8"></div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -226,6 +259,17 @@
               <div class="card-header"><span class="card-title">📄 สรุปข้อมูล Work Permit</span></div>
               <div class="card-body">
                 <div id="review-content"></div>
+                
+                <div class="mt-24">
+                  <label class="form-label">✍️ ลงนามยืนยันข้อมูล (Digital Signature)</label>
+                  <div class="signature-pad-container">
+                    <canvas id="sig-pad"></canvas>
+                    <div class="signature-pad-controls">
+                      <button type="button" class="btn btn-ghost btn-sm" onclick="clearSig()">ล้าง</button>
+                    </div>
+                  </div>
+                  <p class="text-xs text-muted mt-8">การกดส่งคำขอถือเป็นการยืนยันว่าข้อมูลข้างต้นถูกต้องและเป็นความจริง</p>
+                </div>
               </div>
             </div>
 
@@ -251,13 +295,45 @@
 <div class="modal-overlay" id="modal-worker">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title">👷 ค้นหาคนงาน</span>
+      <span class="modal-title">👷 จัดการทีมงาน</span>
       <button class="modal-close" onclick="closeModal('modal-worker')">✕</button>
     </div>
     <div class="modal-body">
-      <p class="text-xs text-muted mb-12">เฉพาะคนงานที่มีบัตร Active และไม่ติด Blacklist</p>
-      <div id="contractor-selection" class="grid-1 gap-8">
-        <!-- List will be populated -->
+      <div class="wizard-steps mb-16" style="font-size: 11px;">
+        <div class="wizard-step active" id="tab-w-select" onclick="switchWorkerTab('select')" style="padding: 6px 12px; cursor: pointer;">เลือกจากฐานข้อมูล</div>
+        <div class="wizard-step" id="tab-w-add" onclick="switchWorkerTab('add')" style="padding: 6px 12px; cursor: pointer;">เพิ่มคนงานใหม่</div>
+      </div>
+
+      <!-- Tab: Select -->
+      <div id="worker-tab-select">
+        <p class="text-xs text-muted mb-12">รายชื่อคนงานที่ขึ้นทะเบียนไว้แล้วกับบริษัทนี้</p>
+        <div id="contractor-selection" class="grid-1 gap-8"></div>
+      </div>
+
+      <!-- Tab: Add New -->
+      <div id="worker-tab-add" style="display:none;">
+        <div class="form-group">
+          <label class="form-label text-xs">เลขประจำตัวประชาชน <span class="req">*</span></label>
+          <input type="text" id="w-new-id" class="form-control" placeholder="X-XXXX-XXXXX-XX-X" oninput="lookupWorker(this.value)">
+          <div id="w-lookup-msg" class="text-xs mt-4" style="display:none;"></div>
+        </div>
+        <div class="grid-2 gap-8 mb-12">
+          <div class="form-group">
+            <label class="form-label text-xs">ชื่อ <span class="req">*</span></label>
+            <input type="text" id="w-new-fname" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label text-xs">นามสกุล <span class="req">*</span></label>
+            <input type="text" id="w-new-lname" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label text-xs">📎 แนบใบประกาศ/Certificates (ถ้ามี)</label>
+          <div class="info-box" style="padding: 12px; background: var(--bg3); border-style: dashed;">
+            <input type="file" id="w-new-certs" multiple class="form-control text-xs" style="border:none; padding:0;">
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary w-100" onclick="addNewWorkerToSession()">เพิ่มเข้าทีมงาน</button>
       </div>
     </div>
   </div>
@@ -267,7 +343,7 @@
 <script src="../js/utils.js"></script>
 <script>
   const user = requireAuth('../index.html');
-  let selectedType = 'COLD_WORK';
+  let selectedMainTypes = [];
   let selectedSubtypes = [];
   let selectedPPE = [];
   let selectedWorkers = [];
@@ -300,29 +376,58 @@
     });
 
     // Default selection
-    selectType('COLD_WORK');
+    toggleMainType('COLD_WORK');
     document.getElementById('f-start-date').value = todayStr();
     document.getElementById('f-end-date').value = todayStr();
   }
 
-  function selectType(type) {
-    selectedType = type;
-    document.getElementById('type-hot').classList.toggle('active', type === 'HOT_WORK');
-    document.getElementById('type-cold').classList.toggle('active', type === 'COLD_WORK');
+  function toggleMainType(type) {
+    if (selectedMainTypes.includes(type)) {
+      selectedMainTypes = selectedMainTypes.filter(t => t !== type);
+    } else {
+      selectedMainTypes.push(type);
+    }
     
-    // Sub-types
-    const subCont = document.getElementById('sub-types');
-    subCont.innerHTML = '';
-    const options = type === 'HOT_WORK' ? HOT_WORK_TYPES : COLD_WORK_TYPES;
-    options.forEach(opt => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'btn btn-ghost btn-sm';
-      btn.style.justifyContent = 'flex-start';
-      btn.textContent = `☐ ${opt.label}`;
-      btn.onclick = () => toggleSubtype(opt.key, btn);
-      subCont.appendChild(btn);
-    });
+    document.getElementById('type-hot').classList.toggle('active', selectedMainTypes.includes('HOT_WORK'));
+    document.getElementById('type-cold').classList.toggle('active', selectedMainTypes.includes('COLD_WORK'));
+    
+    renderSubtypes();
+  }
+
+  function renderSubtypes() {
+    const hotDiv = document.getElementById('hot-subs');
+    const coldDiv = document.getElementById('cold-subs');
+    const hotList = document.getElementById('hot-subs-list');
+    const coldList = document.getElementById('cold-subs-list');
+
+    hotDiv.style.display = selectedMainTypes.includes('HOT_WORK') ? 'block' : 'none';
+    coldDiv.style.display = selectedMainTypes.includes('COLD_WORK') ? 'block' : 'none';
+
+    hotList.innerHTML = '';
+    if (selectedMainTypes.includes('HOT_WORK')) {
+      HOT_WORK_TYPES.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = selectedSubtypes.includes(opt.key) ? 'btn btn-secondary btn-sm' : 'btn btn-ghost btn-sm';
+        btn.style.justifyContent = 'flex-start';
+        btn.textContent = (selectedSubtypes.includes(opt.key) ? '☑ ' : '☐ ') + opt.label;
+        btn.onclick = () => toggleSubtype(opt.key, btn);
+        hotList.appendChild(btn);
+      });
+    }
+
+    coldList.innerHTML = '';
+    if (selectedMainTypes.includes('COLD_WORK')) {
+      COLD_WORK_TYPES.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = selectedSubtypes.includes(opt.key) ? 'btn btn-secondary btn-sm' : 'btn btn-ghost btn-sm';
+        btn.style.justifyContent = 'flex-start';
+        btn.textContent = (selectedSubtypes.includes(opt.key) ? '☑ ' : '☐ ') + opt.label;
+        btn.onclick = () => toggleSubtype(opt.key, btn);
+        coldList.appendChild(btn);
+      });
+    }
   }
 
   function toggleSubtype(key, btn) {
@@ -366,27 +471,126 @@
     window.scrollTo(0, 0);
   }
 
+  function switchWorkerTab(tab) {
+    document.getElementById('tab-w-select').classList.toggle('active', tab === 'select');
+    document.getElementById('tab-w-add').classList.toggle('active', tab === 'add');
+    document.getElementById('worker-tab-select').style.display = tab === 'select' ? 'block' : 'none';
+    document.getElementById('worker-tab-add').style.display = tab === 'add' ? 'block' : 'none';
+    
+    // Clear lookup state when switching
+    if (tab === 'add') {
+      document.getElementById('w-new-id').value = '';
+      lookupWorker('');
+    }
+  }
+
+  let foundWorker = null;
+  function lookupWorker(val) {
+    const msg = document.getElementById('w-lookup-msg');
+    const fName = document.getElementById('w-new-fname');
+    const lName = document.getElementById('w-new-lname');
+    
+    if (val.length < 13) {
+      msg.style.display = 'none';
+      fName.disabled = false;
+      lName.disabled = false;
+      foundWorker = null;
+      return;
+    }
+
+    const workers = dbGetAll('contractors');
+    foundWorker = workers.find(w => w.national_id.replace(/-/g, '') === val.replace(/-/g, ''));
+
+    if (foundWorker) {
+      msg.style.display = 'block';
+      msg.className = 'text-xs mt-4 text-green';
+      msg.innerHTML = '✅ พบข้อมูลคนงานในระบบ (ขึ้นทะเบียนแล้ว)';
+      fName.value = foundWorker.first_name;
+      lName.value = foundWorker.last_name;
+      fName.disabled = true;
+      lName.disabled = true;
+    } else {
+      msg.style.display = 'block';
+      msg.className = 'text-xs mt-4 text-accent';
+      msg.innerHTML = 'ℹ️ ไม่พบข้อมูลในฐานข้อมูล (ต้องกรอกข้อมูลใหม่)';
+      fName.disabled = false;
+      lName.disabled = false;
+    }
+  }
+
+  function addNewWorkerToSession() {
+    const nationalId = document.getElementById('w-new-id').value.trim();
+    const fname = document.getElementById('w-new-fname').value.trim();
+    const lname = document.getElementById('w-new-lname').value.trim();
+    const certFiles = document.getElementById('w-new-certs').files;
+
+    if (!nationalId || !fname || !lname) {
+      showToast('กรุณากรอกข้อมูลคนงานให้ครบถ้วน', 'warning');
+      return;
+    }
+
+    const certNames = [];
+    for (let i = 0; i < certFiles.length; i++) certNames.push(certFiles[i].name);
+
+    const workerData = foundWorker ? {
+      ...foundWorker,
+      certs: [...(foundWorker.certs || []), ...certNames]
+    } : {
+      id: 'new_' + Date.now(),
+      national_id: nationalId,
+      first_name: fname,
+      last_name: lname,
+      certs: certNames,
+      is_new: true
+    };
+
+    if (selectedWorkers.some(sw => sw.id === workerData.id)) {
+      showToast('คนงานนี้อยู่ในทีมแล้ว', 'warning');
+      return;
+    }
+
+    selectedWorkers.push(workerData);
+    renderWorkers();
+    
+    // Reset form
+    document.getElementById('w-new-id').value = '';
+    document.getElementById('w-new-fname').value = '';
+    document.getElementById('w-new-lname').value = '';
+    document.getElementById('w-new-fname').disabled = false;
+    document.getElementById('w-new-lname').disabled = false;
+    document.getElementById('w-new-certs').value = '';
+    document.getElementById('w-lookup-msg').style.display = 'none';
+    foundWorker = null;
+    
+    closeModal('modal-worker');
+    showToast('เพิ่มคนงานเข้าทีมแล้ว', 'success');
+  }
+
   function openAddWorker() {
     const compId = document.getElementById('f-company').value;
     if (!compId) { showToast('กรุณาเลือกบริษัทก่อน', 'warning'); return; }
+    
+    switchWorkerTab('select'); // Default to select
     
     const workers = dbGetAll('contractors').filter(c => c.company_id === compId && c.status === 'ACTIVE');
     const cont = document.getElementById('contractor-selection');
     cont.innerHTML = '';
     
     if (workers.length === 0) {
-      cont.innerHTML = '<p class="text-center text-muted p-16">ไม่พบรายชื่อคนงานในระบบ</p>';
+      cont.innerHTML = '<p class="text-center text-muted p-16">ไม่พบรายชื่อคนงานที่ขึ้นทะเบียนไว้</p>';
     } else {
       workers.forEach(w => {
+        const isSelected = selectedWorkers.some(sw => sw.id === w.id);
         const btn = document.createElement('div');
         btn.className = 'info-box flex-between cursor-pointer';
+        btn.style.opacity = isSelected ? '0.5' : '1';
         btn.innerHTML = `
           <div><strong>${w.first_name} ${w.last_name}</strong><br><small class="text-muted">บัตร: ${w.card_number}</small></div>
-          ${selectedWorkers.some(sw => sw.id === w.id) ? '<span class="text-accent">✓ เลือกแล้ว</span>' : '<button class="btn btn-secondary btn-sm">เลือก</button>'}
+          ${isSelected ? '<span class="text-accent">✓ เลือกแล้ว</span>' : '<button class="btn btn-secondary btn-sm">เลือก</button>'}
         `;
         btn.onclick = () => {
-          if (!selectedWorkers.some(sw => sw.id === w.id)) {
-            selectedWorkers.push(w);
+          if (!isSelected) {
+            selectedWorkers.push({ ...w, certs: [] });
             renderWorkers();
             closeModal('modal-worker');
           }
@@ -404,8 +608,15 @@
       return;
     }
     cont.innerHTML = selectedWorkers.map(w => `
-      <div class="info-box flex-between">
-        <div><strong>${w.first_name} ${w.last_name}</strong><br><small class="text-muted">${w.card_number}</small></div>
+      <div class="worker-tag">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="background:var(--accent); color:#000; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700;">${w.first_name[0]}</div>
+          <div>
+            <div class="font-bold">${w.first_name} ${w.last_name}</div>
+            <div class="text-xs text-muted">${w.national_id || w.card_number}</div>
+            ${w.certs && w.certs.length > 0 ? `<div class="mt-4">${w.certs.map(c => `<span class="badge badge-accent" style="font-size:9px; padding:2px 4px; margin-right:4px;">📄 ${c}</span>`).join('')}</div>` : ''}
+          </div>
+        </div>
         <button type="button" class="btn btn-ghost btn-sm text-red" onclick="removeWorker('${w.id}')">✕</button>
       </div>
     `).join('');
@@ -417,30 +628,82 @@
   }
 
   function renderReview() {
-    const compName = document.getElementById('f-company').options[document.getElementById('f-company').selectedIndex].text;
+    const compEl = document.getElementById('f-company');
+    const compName = compEl.options[compEl.selectedIndex]?.text || '-';
     const cont = document.getElementById('review-content');
+    
     cont.innerHTML = `
       <table class="review-table">
-        <tr><th>บริษัท</th><td>${compName}</td></tr>
-        <tr><th>พื้นที่</th><td>${document.getElementById('f-area').value}</td></tr>
-        <tr><th>ลักษณะงาน</th><td>${document.getElementById('f-desc').value}</td></tr>
+        <tr><th>บริษัทผู้รับเหมา</th><td>${compName}</td></tr>
+        <tr><th>พื้นที่ปฏิบัติงาน</th><td>${document.getElementById('f-area').value}</td></tr>
+        <tr><th>รายละเอียดงาน</th><td>${document.getElementById('f-desc').value}</td></tr>
         <tr><th>ระยะเวลา</th><td>${formatDate(document.getElementById('f-start-date').value)} ถึง ${formatDate(document.getElementById('f-end-date').value)}</td></tr>
-        <tr><th>ประเภทงาน</th><td>${selectedType === 'HOT_WORK' ? '🔥 Hot Work' : '❄️ Cold Work'} (${selectedSubtypes.map(k => {
-          const o = [...HOT_WORK_TYPES, ...COLD_WORK_TYPES].find(i => i.key === k);
-          return o ? o.label : k;
-        }).join(', ') || 'ไม่ได้ระบุ'})</td></tr>
-        <tr><th>PPE</th><td>${selectedPPE.map(k => {
+        <tr><th>ประเภทงาน</th><td>
+          <strong>${selectedMainTypes.map(t => t === 'HOT_WORK' ? '🔥 Hot Work' : '❄️ Cold Work').join(' & ')}</strong><br>
+          <small class="text-muted">${selectedSubtypes.map(k => {
+            const o = [...HOT_WORK_TYPES, ...COLD_WORK_TYPES].find(i => i.key === k);
+            return o ? o.label : k;
+          }).join(', ') || 'ไม่ได้ระบุรายละเอียดย่อย'}</small>
+        </td></tr>
+        <tr><th>อุปกรณ์ PPE</th><td>${selectedPPE.map(k => {
           const o = PPE_OPTIONS.find(i => i.key === k);
           return o ? o.icon + ' ' + o.label : k;
         }).join(', ') || 'ไม่มี'}</td></tr>
-        <tr><th>คนงาน</th><td>${selectedWorkers.length} คน (${selectedWorkers.map(w => w.first_name).join(', ')})</td></tr>
-        <tr><th>KYM</th><td style="white-space:pre-line;">${document.getElementById('f-kym').value || '-'}</td></tr>
+        <tr><th>ทีมงาน (${selectedWorkers.length} คน)</th><td>
+          ${selectedWorkers.map(w => `<div class="text-xs">• ${w.first_name} ${w.last_name} (${w.card_number})</div>`).join('')}
+        </td></tr>
+        <tr><th>ผู้ควบคุมงาน</th><td>
+          DOWA: ${document.getElementById('f-owner').value} (${document.getElementById('f-owner-phone').value})<br>
+          ผู้รับเหมา: ${document.getElementById('f-supervisor').value} (${document.getElementById('f-supervisor-phone').value})
+        </td></tr>
+        <tr><th>มาตรการ KYM</th><td style="white-space:pre-line;">${document.getElementById('f-kym').value || '-'}</td></tr>
       </table>
     `;
+
+    // Signature Pad
+    initSignature();
     
     // Generate preview code
     const datePart = todayStr().replace(/-/g, '');
-    document.getElementById('preview-code').textContent = `WP-${datePart}-XXXX`;
+    document.getElementById('preview-code').textContent = `WP-${datePart}-${Math.floor(1000 + Math.random() * 9000)}`;
+  }
+
+  let sigCanvas, sigCtx, drawing = false;
+  function initSignature() {
+    sigCanvas = document.getElementById('sig-pad');
+    if (!sigCanvas) return;
+    
+    // Adjust canvas size to parent
+    const rect = sigCanvas.parentElement.getBoundingClientRect();
+    sigCanvas.width = rect.width;
+    sigCanvas.height = rect.height;
+    
+    sigCtx = sigCanvas.getContext('2d');
+    sigCtx.strokeStyle = '#2563eb';
+    sigCtx.lineWidth = 2;
+    sigCtx.lineCap = 'round';
+
+    const getPos = (e) => {
+      const r = sigCanvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: clientX - r.left, y: clientY - r.top };
+    };
+
+    const start = (e) => { drawing = true; const p = getPos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x, p.y); };
+    const move = (e) => { if (!drawing) return; const p = getPos(e); sigCtx.lineTo(p.x, p.y); sigCtx.stroke(); e.preventDefault(); };
+    const end = () => { drawing = false; };
+
+    sigCanvas.addEventListener('mousedown', start);
+    sigCanvas.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', end);
+    sigCanvas.addEventListener('touchstart', start);
+    sigCanvas.addEventListener('touchmove', move);
+    sigCanvas.addEventListener('touchend', end);
+  }
+
+  function clearSig() {
+    if (sigCtx) sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
   }
 
   function submitPermit(status) {
@@ -449,9 +712,9 @@
       contractor_company_name: document.getElementById('f-company').options[document.getElementById('f-company').selectedIndex].text,
       work_area: document.getElementById('f-area').value,
       work_description: document.getElementById('f-desc').value,
-      work_type: selectedType,
-      hot_work_types: selectedType === 'HOT_WORK' ? selectedSubtypes : [],
-      cold_work_types: selectedType === 'COLD_WORK' ? selectedSubtypes : [],
+      work_type: selectedMainTypes.join('_AND_'),
+      hot_work_types: selectedSubtypes.filter(k => HOT_WORK_TYPES.some(o => o.key === k)),
+      cold_work_types: selectedSubtypes.filter(k => COLD_WORK_TYPES.some(o => o.key === k)),
       ppe_required: selectedPPE,
       start_date: document.getElementById('f-start-date').value,
       end_date: document.getElementById('f-end-date').value,

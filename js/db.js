@@ -42,6 +42,11 @@ function dbGetAll(table) {
   }
 }
 
+function dbGetById(table, id) {
+  const records = dbGetAll(table);
+  return records.find(r => r.id === id) || null;
+}
+
 function dbSaveTable(table, records) {
   const data = JSON.parse(localStorage.getItem(DB_KEY)) || SEED_DATA;
   data[table] = records;
@@ -65,6 +70,13 @@ function dbUpdate(table, id, updates) {
     return records[idx];
   }
   return null;
+}
+
+function dbDelete(table, id) {
+  const records = dbGetAll(table);
+  const filtered = records.filter(r => r.id !== id);
+  dbSaveTable(table, filtered);
+  return true;
 }
 
 // ===== Auth Functions =====

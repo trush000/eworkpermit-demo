@@ -161,6 +161,7 @@ function renderSidebar(basePath = '../') {
   const navItems = [
     { icon: '📊', label: 'Dashboard', href: `${basePath}dashboard.html`, section: '' },
     { icon: '🔔', label: 'การแจ้งเตือน', href: `${basePath}notifications.html`, badge: dbGetAll('notifications').filter(n => n.status === 'PENDING').length || null, badgeClass: 'badge-red' },
+    { icon: '🌓', label: 'เปลี่ยนธีม (Light/Dark)', href: 'javascript:void(0)', onclick: 'toggleTheme()', id: 'theme-toggle' },
     { section: 'Work Permit' },
     { icon: '🪪', label: 'Work Permits', href: `${basePath}work-permits/index.html`, badge: pendingWP > 0 ? pendingWP : null, badgeClass: '' },
     { icon: '➕', label: 'สร้าง Permit ใหม่', href: `${basePath}work-permits/create.html`, show: ['ADMIN','SAFETY','WORK_OWNER'] },
@@ -191,7 +192,8 @@ function renderSidebar(basePath = '../') {
     }
     if (item.show && !item.show.includes(user.role)) return;
     const badgeHtml = item.badge ? `<span class="nav-badge ${item.badgeClass || ''}">${item.badge}</span>` : '';
-    html += `<a href="${item.href}" class="nav-item" onclick="console.log('Navigating to:', '${item.href}')"><span class="nav-icon">${item.icon}</span>${item.label}${badgeHtml}</a>`;
+    const onclickAttr = item.onclick ? `onclick="${item.onclick}"` : `onclick="console.log('Navigating to:', '${item.href}')"`;
+    html += `<a href="${item.href}" class="nav-item" ${onclickAttr} id="${item.id || ''}"><span class="nav-icon">${item.icon}</span>${item.label}${badgeHtml}</a>`;
   });
 
   html += `</nav>
@@ -400,3 +402,17 @@ function renderPagination(containerId, paging, onPageChange) {
   html += `</div></div>`;
   container.innerHTML = html;
 }
+// ===== Theme Management =====
+function initTheme() {
+  const theme = localStorage.getItem('ewp_theme') || 'dark';
+  document.body.classList.toggle('light-theme', theme === 'light');
+}
+
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-theme');
+  localStorage.setItem('ewp_theme', isLight ? 'light' : 'dark');
+  showToast(`เปลี่ยนเป็นโหมด ${isLight ? 'สว่าง' : 'มืด'}`, 'info');
+}
+
+// Initialize theme on load
+initTheme();
